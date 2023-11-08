@@ -1,0 +1,23 @@
+# This config file is meant to serve as an example of how simple the config file can be if you don't need the extra options
+# To keep it clean, it won't explain any parameters; please refer to the examples in the `examples` folder for parameter explanations
+
+global:
+  teslamate_mqtt_settings:
+    connection: &mqtt_connection_settings
+      host: localhost
+      port: 1883
+
+garage_doors:
+  - circular_geofence:
+      center:
+        lat: 46.19290425661381
+        lng: -123.79965087116439
+      close_distance: .013
+      open_distance: .04
+    opener:
+      type: ratgdo
+      mqtt_settings:
+        connection: *mqtt_connection_settings
+        prefix: home/garage/Main
+    cars:
+      - teslamate_car_id: 1

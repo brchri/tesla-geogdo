@@ -1,0 +1,95 @@
+# This example config shows multiple garage doors configured, each with different geofence and opener types
+# Not all available options or parameter descriptions are shown here for simplicity;
+# for all available options for a specific geofence or opener type, please
+# refer to their respective example config files.
+
+## NOTE ##
+# Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
+
+global:
+  teslamate_mqtt_settings:
+    connection: &mqtt_connection_settings
+      host: localhost
+      port: 1883
+      client_id: tesla-geogdo
+  cooldown: 5
+
+garage_doors:
+  - # main garage example
+    circular_geofence:
+      center:
+        lat: 46.19290425661381
+        lng: -123.79965087116439
+      close_distance: .013
+      open_distance: .04
+    opener:
+      type: ratgdo
+      mqtt_settings:
+        connection:
+          host: localhost
+          port: 1883
+          client_id: tesla-geogdo-ratgdo1
+          # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
+        topic_prefix: home/garage/Main
+    cars:
+      - teslamate_car_id: 1
+      - teslamate_car_id: 2
+
+  - # 3rd car garage example
+    teslamate_geofence:
+      close_trigger:
+        from: home
+        to: not_home
+      open_trigger:
+        from: not_home
+        to: home
+    opener:
+      type: mqtt
+      settings:
+        connection:
+          <<: *mqtt_connection_settings # optional, reference the yaml anchor from the global.teslamate_mqtt_settings to use the same values here, and override the client_id below
+          client_id: tesla-geogdo-mqtt-opener
+          # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
+        topics:
+          prefix: home/garage/3rdCar
+          door_status: status/door
+        commands:
+          - name: open
+            payload: open
+            topic_suffix: command/door
+            required_start_state: closed
+            required_finish_state: open
+          - name: close
+            payload: close
+            topic_suffix: command/door
+            required_start_state: open
+            required_finish_state: closed
+    cars:
+      - teslamate_car_id: 3
+
+  - # 4th car detached garage example
+    polygon_geofence:
+      kml_file: ../../resources/polygon_map.kml
+    opener:
+      type: http
+      settings:
+        connection:
+          host: localhost
+          port: 80
+        status:
+            endpoint: /status
+        commands:
+          - name: open
+            endpoint: /command
+            http_method: post
+            body: '{ "command": "open" }'
+            required_start_state: closed
+            required_finish_state: open
+          - name: close
+            endpoint: /close
+            http_method: post
+            body: 
+            required_start_state: open
+            required_finish_state: closed
+    cars:
+      - teslamate_car_id: 4

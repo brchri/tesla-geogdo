@@ -1,0 +1,13 @@
+with-expecter: true
+mockname: "{{.InterfaceName}}"
+filename: "{{.MockName}}.go"
+outpkg: mocks
+dir: internal/mocks
+packages:
+  github.com/brchri/tesla-geogdo/internal/gdo:
+    interfaces:
+      GDO:
+  github.com/eclipse/paho.mqtt.golang:
+    interfaces:
+      Client:
+      Token:

@@ -1,0 +1,57 @@
+<!-- upload this to https://geojson.io -->
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Placemark id="0">
+      <name>close</name>
+      <ExtendedData></ExtendedData>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -123.7998033090239,46.192958467582514
+              -123.7998033090239,46.19279440766502
+              -123.79950958978756,46.19279440766502
+              -123.79950958978756,46.192958467582514
+              -123.7998033090239,46.192958467582514
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark id="1">
+      <name>open</name>
+      <ExtendedData></ExtendedData>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -123.7997972320742,46.193245921812746
+              -123.79991877106825,46.193052416203386
+              -123.8000342331126,46.192459275200264
+              -123.8013205208015,46.19246067743231
+              -123.80133064905115,46.19241300151987
+              -123.79997751491551,46.192411599286004
+              -123.79954200018626,46.1927747765306
+              -123.79953592323656,46.19297669643191
+              -123.7997972320742,46.193245921812746
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark id="2">
+      <name>close_test</name>
+      <ExtendedData></ExtendedData>
+      <Point>
+        <coordinates>-123.79984989897177,46.19292902096646</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark id="3">
+      <name>open_test</name>
+      <ExtendedData></ExtendedData>
+      <Point>
+        <coordinates>-123.80103692981524,46.19243683948096</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

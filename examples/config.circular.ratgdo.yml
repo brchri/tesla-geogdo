@@ -1,0 +1,41 @@
+# This is an example config file with all available options and explanations for circular geofence and ratgdo opener types.
+
+## NOTE ##
+# Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
+
+global:
+  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+    connection:
+      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      port: 1883
+      client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+      user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
+      pass: mqtt_pass # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_PASS
+      use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+      skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+  cooldown: 5 # minutes to wait after operating garage before allowing another garage operation (set to 0 or omit to disable)
+
+garage_doors:
+  - # main garage example
+    circular_geofence: # circular geofence with a center point, open and close distances (radii)
+      center:
+        lat: 46.19290425661381
+        lng: -123.79965087116439
+      close_distance: .013 # distance in kilometers car must travel away from garage location to close garage door
+      open_distance: .04 # distance in kilometers car must be in range of garage location while traveling closer to it to open garage door
+    opener:
+      type: ratgdo # type of garage door opener to use
+      mqtt_settings: # mqtt broker settings for ratgdo
+        connection: # connection settings for the broker
+          host: localhost # dns, container name, or IP of ratgdo's mqtt host
+          port: 1883
+          client_id: tesla-geogdo-ratgdo1 # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+          # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
+          user: mqtt_user # optional, only define if your mqtt broker requires authentication
+          pass: mqtt_pass # optional, only define if your mqtt broker requires authentication
+          use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+          skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+        topic_prefix: home/garage/Main # required
+    cars: # list of cars that use this garage door
+      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
+      - teslamate_car_id: 2 # id used for the second vehicle in TeslaMate's MQTT broker

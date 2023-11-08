@@ -1,0 +1,7 @@
+.github/
+.git/
+.gitignore
+Dockerfile
+config.yml
+README*
+LICENSE

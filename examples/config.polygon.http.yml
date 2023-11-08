@@ -1,0 +1,82 @@
+# This is an example config file with all available options and explanations for polygon geofence and http opener types.
+
+## NOTE ##
+# Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
+
+global:
+  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+    connection:
+      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      port: 1883
+      client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+      user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
+      pass: mqtt_pass # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_PASS
+      use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+      skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+  cooldown: 5 # minutes to wait after operating garage before allowing another garage operation (set to 0 or omit to disable)
+
+garage_doors:
+  - # main garage example
+    polygon_geofence: # custom defined polygonal geofence
+      kml_file: ../../resources/polygon_map.kml # optional, path to kml file to load polygon geofences; define this OR the `open` and `close` definitions below
+      open: # when vehicle moves from outside to inside this geofence, garage will open
+        - lat: 46.193245921812746
+          lng: -123.7997972320742
+        - lat: 46.193052416203386
+          lng: -123.79991877106825
+        - lat: 46.192459275200264
+          lng: -123.8000342331126
+        - lat: 46.19246067743231
+          lng: -123.8013205208015
+        - lat: 46.19241300151987
+          lng: -123.80133064905115
+        - lat: 46.192411599286004
+          lng: -123.79997751491551
+        - lat: 46.1927747765306
+          lng: -123.79954200018626
+        - lat: 46.19297669643191
+          lng: -123.79953592323656
+        - lat: 46.193245921812746
+          lng: -123.7997972320742
+      close: # when vehicle moves from inside to outside this geofence, garage will close
+        - lat: 46.192958467582514
+          lng: -123.7998033090239
+        - lat: 46.19279440766502
+          lng: -123.7998033090239
+        - lat: 46.19279440766502
+          lng: -123.79950958978756
+        - lat: 46.192958467582514
+          lng: -123.79950958978756
+        - lat: 46.192958467582514
+          lng: -123.7998033090239
+    opener:
+      type: http # type of garage door opener to use
+      settings:
+        connection:
+          host: localhost # http host to connect to
+          port: 80 # http port to connect to
+          use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+          skip_tls_verify: false  # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the http client
+          user: user # optional if basic auth is required
+          pass: pass # optional if basic auth is required
+        status:
+            endpoint: /status # optional, GET endpoint to retrieve current door status; expects simple return values like `open` or `closed`
+        commands:
+          # /command endpoint with a body to indicate the command type
+          - name: open # name of command
+            endpoint: /command # url endpoint to send the command, e.g. /command would post to `http://localhost:80/command``
+            http_method: post
+            body: '{ "command": "open" }' # required only if required by your garage controller endpoint
+            required_start_state: closed # optional; if status endpoint is available, require this starting state to execute this command
+            required_finish_state: open # optional; if status endpoint is available, require this stop state to confirm successful command execution
+            timeout: 25 # optional, seconds to wait for garage door operation to complete if watching the status (default 30)
+          # /close endpoint with no body required, as the endpoint /close defines the type
+          - name: close
+            endpoint: /close
+            http_method: post
+            body: 
+            required_start_state: open
+            required_finish_state: closed
+            timeout: 25
+    cars:
+      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker

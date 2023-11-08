@@ -1,0 +1,56 @@
+# This is an example config file with all available options and explanations for teslamate geofence and mqtt opener types.
+
+## NOTE ##
+# Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
+
+global:
+  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+    connection:
+      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      port: 1883
+      client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+      user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
+      pass: mqtt_pass # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_PASS
+      use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+      skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+  cooldown: 5 # minutes to wait after operating garage before allowing another garage operation (set to 0 or omit to disable)
+
+garage_doors:
+  - # main garage example
+    teslamate_geofence: # uses geofences defined in teslamate; this method is less reliable and not recommended; see Notes section in the README for details
+      close_trigger: # define which geofence changes trigger a close action (e.g. moving from `home` geofence to `not_home`)
+        from: home
+        to: not_home
+      open_trigger: # define which geofence changes trigger an open action (e.g. moving from `not_home` geofence to `home`)
+        from: not_home
+        to: home
+    opener:
+      type: mqtt # type of garage door opener to use
+      settings:
+        connection:
+          host: localhost # dns, container name, or IP of teslamate's mqtt host
+          port: 1883
+          user: mqtt_user # optional, only define if your mqtt broker requires authentication
+          pass: mqtt_pass # optional, only define if your mqtt broker requires authentication
+          use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+          skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+          client_id: tesla-geogdo-mqtt-opener # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+          # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
+        topics: # list of topics to subscribe to for status updates
+          prefix: home/garage/Main # optional, all topics will be prefixed with this (including command topics in the section below), e.g. the full topic for door_status would be `home/garage/Main/status/door`
+          door_status: status/door # optional, if smart garage door supports status updates, then app will watch status to confirm door was operated successfully
+          obstruction: status/obstruction # optional, if smart garage door supports obstruction detection, it will be monitored here as possible errors when door operations fail
+          availability: status/availability # optional, if smart garage door supports availability (e.g. opener is online or offline), it will be monitered here as possible erors when door operations fail
+        commands: # commands to operate the smart garage door opener
+          - name: open # name of the command, must be either `open` or `close` (only supported operations at this time)
+            payload: open # payload to send to the mqtt topic to execute the command (this may be different than the name depending on the smart garage door implementation, but will usually be the same)
+            topic_suffix: command/door # topic to publish the command to
+            required_start_state: closed # optional, if monitoring the door state, then validate that this is the current state before executing the requested action
+            required_finish_state: open # optional, if monitoring the door state, then validate that this is the end state of the requested action to verify the door was operated successfully
+          - name: close
+            payload: close
+            topic_suffix: command/door
+            required_start_state: open
+            required_finish_state: closed
+    cars:
+      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
