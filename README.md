@@ -102,7 +102,7 @@ garage_doors:
 ```
 This would produce two circular geofences (open and close) that look like this:
 
-![image](https://github.com/brchri/tesla-geogdo/assets/126272303/5e39c4a6-d79a-46a0-895d-b926b6c27bcc)
+![image](https://github.com/brchri/tesla-geogdo/assets/126272303/60d9c60b-095d-478b-9418-6a670a225daf)
 
 Under this configuration, your garage would start to open when you *entered* the `open_distance` area, and would start to close as you *exit* the `close_distance` area.
 
@@ -205,7 +205,7 @@ garage_doors:
 
 Either of these configs would produce two polygonal geofences (open and close) that look like this:
 
-![image](https://github.com/brchri/tesla-geogdo/assets/126272303/55c0eed4-3927-4678-865c-ac99e890f8bb)
+![image](https://github.com/brchri/tesla-geogdo/assets/126272303/2dbcb375-0425-44af-b8c0-3f7e79762b54)
 
 Under this configuration, your garage would start to open when you *entered* the `open` area, and would start to close as you *exit* the `close` area.
 
