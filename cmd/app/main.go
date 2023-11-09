@@ -217,14 +217,21 @@ func main() {
 // this allows threaded geofence checks for multiple vehicles, while each individual vehicle
 // does not have parallel threads executing checks
 func processLocationUpdates(car *geo.Car) {
+	// create markers to determine if we should check for geofence event triggers
+	latUpdated, lngUpdated := false, false
 	for update := range car.LocationUpdate {
 		if update.Lat != 0 {
 			car.CurrentLocation.Lat = update.Lat
+			latUpdated = true
 		}
 		if update.Lng != 0 {
 			car.CurrentLocation.Lng = update.Lng
+			lngUpdated = true
 		}
-		if car.CurrentLocation.IsPointDefined() {
+		// if we've received lat and lng updates, then we can check for a geofence change and reset the check markers
+		if latUpdated && lngUpdated {
+			latUpdated, lngUpdated = false, false
+			logger.Debugf("checking for geofence event triggers for car %d at lat: %f, lng: %f...", car.ID, car.CurrentLocation.Lat, car.CurrentLocation.Lng)
 			geo.CheckGeofence(car)
 		}
 	}
