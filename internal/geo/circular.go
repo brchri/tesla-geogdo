@@ -1,7 +1,10 @@
 package geo
 
 import (
+	"fmt"
 	"math"
+
+	"gopkg.in/yaml.v3"
 )
 
 type (
@@ -44,17 +47,31 @@ func (c *CircularGeofence) getEventChangeAction(car *Car) (action string) {
 
 	// update car's current distance, and store the previous distance in a variable
 	prevDistance := car.CurDistance
-	car.CurDistance = distance(car.CurrentLocation, car.GarageDoor.CircularGeofence.Center)
+	car.CurDistance = distance(car.CurrentLocation, c.Center)
 
 	// check if car has crossed a geofence and set an appropriate action
-	if car.GarageDoor.CircularGeofence.CloseDistance > 0 && // is valid close distance defined
-		prevDistance <= car.GarageDoor.CircularGeofence.CloseDistance &&
-		car.CurDistance > car.GarageDoor.CircularGeofence.CloseDistance { // car was within close geofence, but now beyond it (car left geofence)
+	if c.CloseDistance > 0 && // is valid close distance defined
+		prevDistance <= c.CloseDistance &&
+		car.CurDistance > c.CloseDistance { // car was within close geofence, but now beyond it (car left geofence)
 		action = ActionClose
-	} else if car.GarageDoor.CircularGeofence.OpenDistance > 0 && // is valid open distance defined
-		prevDistance >= car.GarageDoor.CircularGeofence.OpenDistance &&
-		car.CurDistance < car.GarageDoor.CircularGeofence.OpenDistance { // car was outside of open geofence, but is now within it (car entered geofence)
+	} else if c.OpenDistance > 0 && // is valid open distance defined
+		prevDistance >= c.OpenDistance &&
+		car.CurDistance < c.OpenDistance { // car was outside of open geofence, but is now within it (car entered geofence)
 		action = ActionOpen
 	}
 	return
+}
+
+func (c *CircularGeofence) parseSettings(config map[string]interface{}) error {
+	yamlData, err := yaml.Marshal(config)
+	var settings CircularGeofence
+	if err != nil {
+		return fmt.Errorf("failed to marhsal geofence yaml object, error: %v", err)
+	}
+	err = yaml.Unmarshal(yamlData, &settings)
+	if err != nil {
+		return fmt.Errorf("failed to unmarhsal geofence yaml object, error: %v", err)
+	}
+	*c = settings
+	return nil
 }

@@ -17,13 +17,15 @@ global:
 
 garage_doors:
   - # main garage example
-    teslamate_geofence: # uses geofences defined in teslamate; this method is less reliable and not recommended; see Notes section in the README for details
-      close_trigger: # define which geofence changes trigger a close action (e.g. moving from `home` geofence to `not_home`)
-        from: home
-        to: not_home
-      open_trigger: # define which geofence changes trigger an open action (e.g. moving from `not_home` geofence to `home`)
-        from: not_home
-        to: home
+    geofence: # uses geofences defined in teslamate; this method is less reliable and not recommended; see Notes section in the README for details
+      type: teslamate
+      settings:
+        close_trigger: # define which geofence changes trigger a close action (e.g. moving from `home` geofence to `not_home`)
+          from: home
+          to: not_home
+        open_trigger: # define which geofence changes trigger an open action (e.g. moving from `not_home` geofence to `home`)
+          from: not_home
+          to: home
     opener:
       type: mqtt # type of garage door opener to use
       settings:

@@ -15,12 +15,15 @@ import (
 var (
 	distanceCar        *Car
 	distanceGarageDoor *GarageDoor
+	distanceGeofence   *CircularGeofence
 
-	geofenceGarageDoor *GarageDoor
-	geofenceCar        *Car
+	teslamateGarageDoor *GarageDoor
+	teslamateCar        *Car
+	teslamateGeofence   *TeslamateGeofence
 
 	polygonGarageDoor *GarageDoor
 	polygonCar        *Car
+	polygonGeofence   *PolygonGeofence
 )
 
 func init() {
@@ -32,44 +35,47 @@ func init() {
 	distanceGarageDoor = GarageDoors[0]
 	distanceCar = distanceGarageDoor.Cars[0]
 	distanceCar.GarageDoor = distanceGarageDoor
+	distanceGeofence, _ = distanceCar.GarageDoor.Geofence.(*CircularGeofence) // type cast geofence interface
 
 	// used for testing events based on teslamate geofence changes
-	geofenceGarageDoor = GarageDoors[1]
-	geofenceCar = geofenceGarageDoor.Cars[0]
-	geofenceCar.GarageDoor = geofenceGarageDoor
+	teslamateGarageDoor = GarageDoors[1]
+	teslamateCar = teslamateGarageDoor.Cars[0]
+	teslamateCar.GarageDoor = teslamateGarageDoor
+	teslamateGeofence, _ = teslamateCar.GarageDoor.Geofence.(*TeslamateGeofence) // type cast geofence interface
 
 	// used for testing events based on teslamate geofence changes
 	polygonGarageDoor = GarageDoors[2]
 	polygonCar = polygonGarageDoor.Cars[0]
 	polygonCar.GarageDoor = polygonGarageDoor
+	polygonGeofence, _ = polygonCar.GarageDoor.Geofence.(*PolygonGeofence) // type cast geofence interface
 
 	util.Config.Global.OpCooldown = 0
 }
 
 func Test_getEventChangeAction_Circular(t *testing.T) {
 	distanceCar.CurDistance = 0
-	distanceCar.CurrentLocation.Lat = distanceCar.GarageDoor.CircularGeofence.Center.Lat + 10
-	distanceCar.CurrentLocation.Lng = distanceCar.GarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat + 10
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	assert.Equal(t, ActionClose, distanceCar.GarageDoor.Geofence.getEventChangeAction(distanceCar))
-	assert.Greater(t, distanceCar.CurDistance, distanceCar.GarageDoor.CircularGeofence.CloseDistance)
+	assert.Greater(t, distanceCar.CurDistance, distanceGeofence.CloseDistance)
 
-	distanceCar.CurrentLocation.Lat = distanceCar.GarageDoor.CircularGeofence.Center.Lat
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat
 
 	assert.Equal(t, ActionOpen, distanceCar.GarageDoor.Geofence.getEventChangeAction(distanceCar))
-	assert.Less(t, distanceCar.CurDistance, distanceCar.GarageDoor.CircularGeofence.OpenDistance)
+	assert.Less(t, distanceCar.CurDistance, distanceGeofence.OpenDistance)
 }
 
 func Test_getEventChangeAction_Teslamate(t *testing.T) {
-	geofenceCar.PrevGeofence = "home"
-	geofenceCar.CurGeofence = "not_home"
+	teslamateCar.PrevGeofence = "home"
+	teslamateCar.CurGeofence = "not_home"
 
-	assert.Equal(t, ActionClose, geofenceCar.GarageDoor.Geofence.getEventChangeAction(geofenceCar))
+	assert.Equal(t, ActionClose, teslamateCar.GarageDoor.Geofence.getEventChangeAction(teslamateCar))
 
-	geofenceCar.PrevGeofence = "not_home"
-	geofenceCar.CurGeofence = "home"
+	teslamateCar.PrevGeofence = "not_home"
+	teslamateCar.CurGeofence = "home"
 
-	assert.Equal(t, ActionOpen, geofenceCar.GarageDoor.Geofence.getEventChangeAction(geofenceCar))
+	assert.Equal(t, ActionOpen, teslamateCar.GarageDoor.Geofence.getEventChangeAction(teslamateCar))
 }
 
 func Test_isInsidePolygonGeo(t *testing.T) {
@@ -78,14 +84,14 @@ func Test_isInsidePolygonGeo(t *testing.T) {
 		Lng: -123.79984989897177,
 	}
 
-	assert.Equal(t, false, isInsidePolygonGeo(p, polygonCar.GarageDoor.PolygonGeofence.Close))
+	assert.Equal(t, false, isInsidePolygonGeo(p, polygonGeofence.Close))
 
 	p = Point{
 		Lat: 46.19243683948096,
 		Lng: -123.80103692981524,
 	}
 
-	assert.Equal(t, true, isInsidePolygonGeo(p, polygonCar.GarageDoor.PolygonGeofence.Open))
+	assert.Equal(t, true, isInsidePolygonGeo(p, polygonGeofence.Open))
 }
 
 func Test_getEventAction_Polygon(t *testing.T) {
@@ -113,8 +119,8 @@ func Test_CheckCircularGeofence_Leaving(t *testing.T) {
 	mockGdo.EXPECT().SetGarageDoor(ActionClose).Return(nil)
 
 	distanceCar.CurDistance = 0
-	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat + 10
-	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat + 10
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	assert.Equal(t, checkGeofenceWrapper(distanceCar), true)
 }
@@ -125,15 +131,15 @@ func Test_CheckCircularGeofence_Leaving_NoClose(t *testing.T) {
 	distanceCar.GarageDoor.Opener = mockGdo
 	defer mockGdo.AssertExpectations(t)
 
-	prevCloseDistance := distanceCar.GarageDoor.CircularGeofence.CloseDistance
-	distanceCar.GarageDoor.CircularGeofence.CloseDistance = 0
+	prevCloseDistance := distanceGeofence.CloseDistance
+	distanceGeofence.CloseDistance = 0
 
 	distanceCar.CurDistance = 0
-	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat + 10
-	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat + 10
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	assert.Equal(t, checkGeofenceWrapper(distanceCar), true)
-	distanceCar.GarageDoor.CircularGeofence.CloseDistance = prevCloseDistance // restore settings
+	distanceGeofence.CloseDistance = prevCloseDistance // restore settings
 }
 
 func Test_CheckCircularGeofence_Arriving(t *testing.T) {
@@ -144,32 +150,11 @@ func Test_CheckCircularGeofence_Arriving(t *testing.T) {
 	mockGdo.EXPECT().SetGarageDoor(ActionOpen).Return(nil)
 
 	distanceCar.CurDistance = 100
-	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat
-	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	assert.Equal(t, checkGeofenceWrapper(distanceCar), true)
 }
-
-// // retry logic has been temporarily disabled, so this test is not needed until it's re-enabled
-// // this is due to the myq api changes that need stabilizing so we don't retry and hit api rate limiting
-// // func Test_CheckCircularGeofence_Arriving_LoggedIn_Retry(t *testing.T) {
-// // 	myqSession := &mocks.MyqSessionInterface{}
-// // 	myqSession.Test(t)
-// // 	defer myqSession.AssertExpectations(t)
-// // 	myqExec = myqSession
-
-// // 	// TEST 1 - Arriving home, garage open
-// // 	myqSession.EXPECT().DeviceState(mock.AnythingOfType("string")).Return(myq.StateClosed, nil).Times(3)
-// // 	myqSession.EXPECT().SetDoorState(mock.AnythingOfType("string"), ActionOpen).Return(errors.New("some error")).Twice()
-// // 	myqSession.EXPECT().SetDoorState(mock.AnythingOfType("string"), ActionOpen).Return(nil).Once()
-// // 	myqSession.EXPECT().DeviceState(mock.AnythingOfType("string")).Return(myq.StateOpen, nil).Once()
-
-// // 	distanceCar.CurDistance = 100
-// // 	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat
-// // 	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
-
-// // 	assert.Equal(t, checkGeofenceWrapper(distanceCar), true)
-// // }
 
 func Test_CheckCircularGeofence_LeaveThenArrive(t *testing.T) {
 	mockGdo := &mocks.GDO{}
@@ -180,8 +165,8 @@ func Test_CheckCircularGeofence_LeaveThenArrive(t *testing.T) {
 	mockGdo.EXPECT().SetGarageDoor(ActionClose).Return(nil)
 
 	distanceCar.CurDistance = 0
-	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat + 10
-	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat + 10
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	CheckGeofence(distanceCar)
 	// wait for oplock to release to ensure goroutine within CheckGeofence function has completed
@@ -196,53 +181,53 @@ func Test_CheckCircularGeofence_LeaveThenArrive(t *testing.T) {
 	// TEST 2 - Arriving home, garage open
 	mockGdo.EXPECT().SetGarageDoor(ActionOpen).Return(nil)
 
-	distanceCar.CurrentLocation.Lat = distanceGarageDoor.CircularGeofence.Center.Lat
-	distanceCar.CurrentLocation.Lng = distanceGarageDoor.CircularGeofence.Center.Lng
+	distanceCar.CurrentLocation.Lat = distanceGeofence.Center.Lat
+	distanceCar.CurrentLocation.Lng = distanceGeofence.Center.Lng
 
 	assert.Equal(t, checkGeofenceWrapper(distanceCar), true)
 }
 
 func Test_CheckTeslamateGeofence_Leaving(t *testing.T) {
 	mockGdo := &mocks.GDO{}
-	geofenceCar.GarageDoor.Opener = mockGdo
+	teslamateCar.GarageDoor.Opener = mockGdo
 	defer mockGdo.AssertExpectations(t)
 
 	// TEST 1 - Leaving home, garage close
 	mockGdo.EXPECT().SetGarageDoor(ActionClose).Return(nil)
 
-	geofenceCar.PrevGeofence = "home"
-	geofenceCar.CurGeofence = "not_home"
+	teslamateCar.PrevGeofence = "home"
+	teslamateCar.CurGeofence = "not_home"
 
-	assert.Equal(t, checkGeofenceWrapper(geofenceCar), true)
+	assert.Equal(t, checkGeofenceWrapper(teslamateCar), true)
 }
 
 func Test_CheckTeslamateGeofence_Leaving_NoClose(t *testing.T) {
 	mockGdo := &mocks.GDO{}
-	geofenceCar.GarageDoor.Opener = mockGdo
+	teslamateCar.GarageDoor.Opener = mockGdo
 	defer mockGdo.AssertExpectations(t)
 
-	prevGeofenceClose := geofenceCar.GarageDoor.TeslamateGeofence.Close
-	geofenceCar.GarageDoor.TeslamateGeofence.Close = TeslamateGeofenceTrigger{}
+	prevGeofenceClose := teslamateGeofence.Close
+	teslamateGeofence.Close = TeslamateGeofenceTrigger{}
 
-	geofenceCar.PrevGeofence = "home"
-	geofenceCar.CurGeofence = "not_home"
+	teslamateCar.PrevGeofence = "home"
+	teslamateCar.CurGeofence = "not_home"
 
-	assert.Equal(t, checkGeofenceWrapper(geofenceCar), true)
-	geofenceCar.GarageDoor.TeslamateGeofence.Close = prevGeofenceClose // restore settings
+	assert.Equal(t, checkGeofenceWrapper(teslamateCar), true)
+	teslamateGeofence.Close = prevGeofenceClose // restore settings
 }
 
 func Test_CheckTeslamateGeofence_Arriving(t *testing.T) {
 	mockGdo := &mocks.GDO{}
-	geofenceCar.GarageDoor.Opener = mockGdo
+	teslamateCar.GarageDoor.Opener = mockGdo
 	defer mockGdo.AssertExpectations(t)
 
 	// TEST 1 - Arriving home, garage open
 	mockGdo.EXPECT().SetGarageDoor(ActionOpen).Return(nil)
 
-	geofenceCar.PrevGeofence = "not_home"
-	geofenceCar.CurGeofence = "home"
+	teslamateCar.PrevGeofence = "not_home"
+	teslamateCar.CurGeofence = "home"
 
-	assert.Equal(t, checkGeofenceWrapper(geofenceCar), true)
+	assert.Equal(t, checkGeofenceWrapper(teslamateCar), true)
 }
 
 func Test_CheckPolyGeofence_Leaving(t *testing.T) {
@@ -283,8 +268,8 @@ func Test_CheckPolyGeofence_Leaving_NoClose(t *testing.T) {
 	polygonCar.GarageDoor.Opener = mockGdo
 	defer mockGdo.AssertExpectations(t)
 
-	prevCloseGeofence := polygonCar.GarageDoor.PolygonGeofence.Close
-	polygonCar.GarageDoor.PolygonGeofence.Close = []Point{}
+	prevCloseGeofence := polygonGeofence.Close
+	polygonGeofence.Close = []Point{}
 
 	polygonCar.InsidePolyCloseGeo = true
 	polygonCar.InsidePolyOpenGeo = true
@@ -292,7 +277,7 @@ func Test_CheckPolyGeofence_Leaving_NoClose(t *testing.T) {
 	polygonCar.CurrentLocation.Lng = -123.80103692981524
 
 	assert.Equal(t, checkGeofenceWrapper(polygonCar), true)
-	polygonCar.GarageDoor.PolygonGeofence.Close = prevCloseGeofence // restore settings
+	polygonGeofence.Close = prevCloseGeofence // restore settings
 }
 
 // runs CheckGeofence and waits for the internal goroutine to complete, signified by the release of oplock,

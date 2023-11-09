@@ -16,12 +16,14 @@ global:
 
 garage_doors:
   - # main garage example
-    circular_geofence:
-      center:
-        lat: 46.19290425661381
-        lng: -123.79965087116439
-      close_distance: .013
-      open_distance: .04
+    geofence:
+      type: circular
+      settings:
+        center:
+          lat: 46.19290425661381
+          lng: -123.79965087116439
+        close_distance: .013
+        open_distance: .04
     opener:
       type: ratgdo
       mqtt_settings:
@@ -36,13 +38,15 @@ garage_doors:
       - teslamate_car_id: 2
 
   - # 3rd car garage example
-    teslamate_geofence:
-      close_trigger:
-        from: home
-        to: not_home
-      open_trigger:
-        from: not_home
-        to: home
+    geofence:
+      type: teslamate
+      settings:
+        close_trigger:
+          from: home
+          to: not_home
+        open_trigger:
+          from: not_home
+          to: home
     opener:
       type: mqtt
       settings:
@@ -68,8 +72,10 @@ garage_doors:
       - teslamate_car_id: 3
 
   - # 4th car detached garage example
-    polygon_geofence:
-      kml_file: ../../resources/polygon_map.kml
+    geofence:
+      type: polygon
+      settings:
+        kml_file: ../../resources/polygon_map.kml
     opener:
       type: http
       settings:
