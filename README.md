@@ -1,5 +1,5 @@
 # Tesla-GeoGDO
-A lightweight app that will operate your smart connected garage doors based on the location of your Tesla vehicles, automatically closing when you leave, and opening when you return. Supports multiple vehicles and smart garage door opener devices.
+A lightweight app that will operate your smart Garage Door Openers (GDOs) based on the location of your Tesla vehicles, automatically closing when you leave, and opening when you return. Supports multiple vehicles, geofence types, and smart GDO devices.
 
 <!-- TOC -->
 
