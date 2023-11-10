@@ -84,12 +84,14 @@ This is the simplist geofence to configure. You provide a latitude and longitude
 
 ```yaml
 garage_doors:
-  - circular_geofence:
-      center:
-        lat: 46.19290425661381
-        lng: -123.79965087116439
-      close_distance: .013
-      open_distance: .04
+  - geofence:
+      type: circular
+      settings:
+        center:
+          lat: 46.19290425661381
+          lng: -123.79965087116439
+        close_distance: .013
+        open_distance: .04
     opener:
       type: ratgdo
       mqtt_settings:
@@ -117,13 +119,15 @@ An example of a garage door configured with this type of geofence would look lik
 
 ```yaml
 garage_doors:
-  - teslamate_geofence:
-      close_trigger:
-        from: home
-        to: not_home
-      open_trigger:
-        from: not_home
-        to: home
+  - geofence:
+      type: teslamate
+      settings:
+        close_trigger:
+          from: home
+          to: not_home
+        open_trigger:
+          from: not_home
+          to: home
     opener:
       type: ratgdo
       mqtt_settings:
@@ -142,37 +146,39 @@ An example of a garage door configured with this type of geofence would look lik
 
 ```yaml
 garage_doors:
-  - polygon_geofence:
-      open:
-        - lat: 46.193245921812746
-          lng: -123.7997972320742
-        - lat: 46.193052416203386
-          lng: -123.79991877106825
-        - lat: 46.192459275200264
-          lng: -123.8000342331126
-        - lat: 46.19246067743231
-          lng: -123.8013205208015
-        - lat: 46.19241300151987
-          lng: -123.80133064905115
-        - lat: 46.192411599286004
-          lng: -123.79997751491551
-        - lat: 46.1927747765306
-          lng: -123.79954200018626
-        - lat: 46.19297669643191
-          lng: -123.79953592323656
-        - lat: 46.193245921812746
-          lng: -123.7997972320742
-      close:
-        - lat: 46.192958467582514
-          lng: -123.7998033090239
-        - lat: 46.19279440766502
-          lng: -123.7998033090239
-        - lat: 46.19279440766502
-          lng: -123.79950958978756
-        - lat: 46.192958467582514
-          lng: -123.79950958978756
-        - lat: 46.192958467582514
-          lng: -123.7998033090239
+  - geofence:
+      type: polygon
+      settings:
+        open:
+          - lat: 46.193245921812746
+            lng: -123.7997972320742
+          - lat: 46.193052416203386
+            lng: -123.79991877106825
+          - lat: 46.192459275200264
+            lng: -123.8000342331126
+          - lat: 46.19246067743231
+            lng: -123.8013205208015
+          - lat: 46.19241300151987
+            lng: -123.80133064905115
+          - lat: 46.192411599286004
+            lng: -123.79997751491551
+          - lat: 46.1927747765306
+            lng: -123.79954200018626
+          - lat: 46.19297669643191
+            lng: -123.79953592323656
+          - lat: 46.193245921812746
+            lng: -123.7997972320742
+        close:
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
     opener:
       type: ratgdo
       mqtt_settings:
@@ -190,8 +196,10 @@ An example of a garage door configured this way would look like this:
 
 ```yaml
 garage_doors:
-  - polygon_geofence:
-      kml_file: config/polygon_geofences.kml
+  - geofence:
+      type: polygon
+      settings:
+        kml_file: config/polygon_geofences.kml
     opener:
       type: ratgdo
       mqtt_settings:

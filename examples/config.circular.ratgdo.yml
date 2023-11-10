@@ -17,12 +17,14 @@ global:
 
 garage_doors:
   - # main garage example
-    circular_geofence: # circular geofence with a center point, open and close distances (radii)
-      center:
-        lat: 46.19290425661381
-        lng: -123.79965087116439
-      close_distance: .013 # distance in kilometers car must travel away from garage location to close garage door
-      open_distance: .04 # distance in kilometers car must be in range of garage location while traveling closer to it to open garage door
+    geofence: # circular geofence with a center point, open and close distances (radii)
+      type: circular
+      settings:
+        center:
+          lat: 46.19290425661381
+          lng: -123.79965087116439
+        close_distance: .013 # distance in kilometers car must travel away from garage location to close garage door
+        open_distance: .04 # distance in kilometers car must be in range of garage location while traveling closer to it to open garage door
     opener:
       type: ratgdo # type of garage door opener to use
       mqtt_settings: # mqtt broker settings for ratgdo

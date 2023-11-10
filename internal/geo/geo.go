@@ -1,7 +1,7 @@
 package geo
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -34,20 +34,24 @@ type (
 	// only one geofence type may be defined per garage door
 	// if more than one defined, priority will be polygon > circular > teslamate
 	GarageDoor struct {
-		CircularGeofence  *CircularGeofence      `yaml:"circular_geofence"`
-		TeslamateGeofence *TeslamateGeofence     `yaml:"teslamate_geofence"`
-		PolygonGeofence   *PolygonGeofence       `yaml:"polygon_geofence"`
-		Cars              []*Car                 `yaml:"cars"`   // cars housed within this garage
-		OpenerConfig      map[string]interface{} `yaml:"opener"` // holds gdo config that is parsed on gdo.Initialize
-		OpLock            bool                   // controls if garagedoor has been operated recently to prevent flapping
-		GeofenceType      string                 // indicates whether garage door uses teslamate's geofence or not (checked during runtime)
-		Geofence          GeofenceInterface
-		Opener            gdo.GDO `yaml:"-"` // garage door opener; don't parse this from the garage door yaml
+		Geofence       GeofenceInterface      `yaml:"-"` // geofence; don't parse this from the geofence yaml
+		Opener         gdo.GDO                `yaml:"-"` // garage door opener; don't parse this from the garage door yaml
+		GeofenceConfig map[string]interface{} `yaml:"geofence"`
+		OpenerConfig   map[string]interface{} `yaml:"opener"` // holds gdo config that is parsed on gdo.Initialize
+		Cars           []*Car                 `yaml:"cars"`   // cars housed within this garage
+		OpLock         bool                   // controls if garagedoor has been operated recently to prevent flapping
 	}
 
+	// interface to represent geofence object
 	GeofenceInterface interface {
+		// check for an event trigger if a geofence is crossed and return appropriate action
+		// determines if a car is currently within a geofence, if it was previously,
+		// and what action should be taken if those are different (indicating a crossing of geofences)
 		getEventChangeAction(*Car) string
+		// get teslamate mqtt topics relevant to the implemented geofence type
 		GetMqttTopics() []string
+		// parse the settings: of a geofence into the specific geofence type struct
+		parseSettings(map[string]interface{}) error
 	}
 )
 
@@ -115,34 +119,6 @@ func CheckGeofence(car *Car) {
 	}()
 }
 
-// checks for valid geofence values for a garage door
-// preferred priority is polygon > circular > teslamate
-// at least one open OR one close must be defined to identify a geofence type
-func (g *GarageDoor) SetGeofenceType() error {
-	var geoType string
-	if g.PolygonGeofence != nil &&
-		(len(g.PolygonGeofence.Open) > 0 ||
-			len(g.PolygonGeofence.Close) > 0) {
-		g.Geofence = g.PolygonGeofence
-		geoType = "Polygon"
-	} else if g.CircularGeofence != nil &&
-		g.CircularGeofence.Center.IsPointDefined() &&
-		(g.CircularGeofence.OpenDistance > 0 ||
-			g.CircularGeofence.CloseDistance > 0) {
-		g.Geofence = g.CircularGeofence
-		geoType = "Circular"
-	} else if g.TeslamateGeofence != nil &&
-		(g.TeslamateGeofence.Close.IsTriggerDefined() ||
-			g.TeslamateGeofence.Open.IsTriggerDefined()) {
-		g.Geofence = g.TeslamateGeofence
-		geoType = "Teslamate"
-	} else {
-		return errors.New("unable to determine geofence type for garage door")
-	}
-	logger.Debugf("Garage door geofence type identified: %s", geoType)
-	return nil
-}
-
 func ParseGarageDoorConfig() {
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(util.Config.GarageDoors)
@@ -162,29 +138,10 @@ func ParseGarageDoorConfig() {
 		if len(g.Cars) == 0 {
 			logger.Fatalf("No cars found for garage door #%d! Please ensure proper spacing in the config file", i)
 		}
-		// check if kml_file was defined, and if so, load and parse kml and set polygon geofences accordingly
-		if g.PolygonGeofence != nil && g.PolygonGeofence.KMLFile != "" {
-			logger.Debugf("KML file %s found, loading", g.PolygonGeofence.KMLFile)
-			if err := loadKMLFile(g.PolygonGeofence); err != nil {
-				logger.Warnf("Unable to load KML file: %v", err)
-			} else {
-				logger.Debug("KML file loaded successfully")
-			}
-		}
-		err = g.SetGeofenceType()
+
+		g.Geofence, err = newGeofence(g.GeofenceConfig)
 		if err != nil {
-			logger.Fatalf("error: no supported geofences defined for garage door %v", g)
-		} else {
-			var geoType string
-			switch g.Geofence.(type) {
-			case *TeslamateGeofence:
-				geoType = "Teslamate"
-			case *PolygonGeofence:
-				geoType = "Polygon"
-			case *CircularGeofence:
-				geoType = "Circular"
-			}
-			logger.Debugf("Garage door geofence type identified: %s", geoType)
+			logger.Fatalf("unable to parse geofence config for door %d, received error: %v", i, err)
 		}
 
 		g.Opener, err = InitializeGdoFunc(g.OpenerConfig)
@@ -197,4 +154,34 @@ func ParseGarageDoorConfig() {
 			c.LocationUpdate = make(chan Point, 2)
 		}
 	}
+}
+
+// return a new instance of a GeofenceInterface based on the type defined in the config yml
+func newGeofence(config map[string]interface{}) (GeofenceInterface, error) {
+	type geofenceConfig struct {
+		GeofenceType string                 `yaml:"type"`
+		Settings     map[string]interface{} `yaml:"settings"`
+	}
+	var geoConfig geofenceConfig
+	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
+	yamlData, err := yaml.Marshal(config)
+	if err != nil {
+		logger.Fatal("Failed to marhsal geofence yaml object")
+	}
+	err = yaml.Unmarshal(yamlData, &geoConfig)
+	if err != nil {
+		logger.Fatal("Failed to unmarhsal geofence yaml object")
+	}
+	var g GeofenceInterface
+	switch geoConfig.GeofenceType {
+	case "circular":
+		g = &CircularGeofence{}
+	case "teslamate":
+		g = &TeslamateGeofence{}
+	case "polygon":
+		g = &PolygonGeofence{}
+	default:
+		return nil, fmt.Errorf("unable to parse geofence config type %s", geoConfig.GeofenceType)
+	}
+	return g, g.parseSettings(geoConfig.Settings)
 }

@@ -17,38 +17,40 @@ global:
 
 garage_doors:
   - # main garage example
-    polygon_geofence: # custom defined polygonal geofence
-      kml_file: ../../resources/polygon_map.kml # optional, path to kml file to load polygon geofences; define this OR the `open` and `close` definitions below
-      open: # when vehicle moves from outside to inside this geofence, garage will open
-        - lat: 46.193245921812746
-          lng: -123.7997972320742
-        - lat: 46.193052416203386
-          lng: -123.79991877106825
-        - lat: 46.192459275200264
-          lng: -123.8000342331126
-        - lat: 46.19246067743231
-          lng: -123.8013205208015
-        - lat: 46.19241300151987
-          lng: -123.80133064905115
-        - lat: 46.192411599286004
-          lng: -123.79997751491551
-        - lat: 46.1927747765306
-          lng: -123.79954200018626
-        - lat: 46.19297669643191
-          lng: -123.79953592323656
-        - lat: 46.193245921812746
-          lng: -123.7997972320742
-      close: # when vehicle moves from inside to outside this geofence, garage will close
-        - lat: 46.192958467582514
-          lng: -123.7998033090239
-        - lat: 46.19279440766502
-          lng: -123.7998033090239
-        - lat: 46.19279440766502
-          lng: -123.79950958978756
-        - lat: 46.192958467582514
-          lng: -123.79950958978756
-        - lat: 46.192958467582514
-          lng: -123.7998033090239
+    geofence: # custom defined polygonal geofence
+      type: polygon
+      settings:
+        kml_file: ../../resources/polygon_map.kml # optional, path to kml file to load polygon geofences; define this OR the `open` and `close` definitions below
+        open: # when vehicle moves from outside to inside this geofence, garage will open
+          - lat: 46.193245921812746
+            lng: -123.7997972320742
+          - lat: 46.193052416203386
+            lng: -123.79991877106825
+          - lat: 46.192459275200264
+            lng: -123.8000342331126
+          - lat: 46.19246067743231
+            lng: -123.8013205208015
+          - lat: 46.19241300151987
+            lng: -123.80133064905115
+          - lat: 46.192411599286004
+            lng: -123.79997751491551
+          - lat: 46.1927747765306
+            lng: -123.79954200018626
+          - lat: 46.19297669643191
+            lng: -123.79953592323656
+          - lat: 46.193245921812746
+            lng: -123.7997972320742
+        close: # when vehicle moves from inside to outside this geofence, garage will close
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
     opener:
       type: http # type of garage door opener to use
       settings:

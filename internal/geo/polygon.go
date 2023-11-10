@@ -2,12 +2,14 @@ package geo
 
 import (
 	"encoding/xml"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	util "github.com/brchri/tesla-geogdo/internal/util"
 	logger "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type (
@@ -56,12 +58,12 @@ func (p *PolygonGeofence) getEventChangeAction(car *Car) (action string) {
 		return // need valid lat and long to check geofence
 	}
 
-	isInsideCloseGeo := isInsidePolygonGeo(car.CurrentLocation, car.GarageDoor.PolygonGeofence.Close)
-	isInsideOpenGeo := isInsidePolygonGeo(car.CurrentLocation, car.GarageDoor.PolygonGeofence.Open)
+	isInsideCloseGeo := isInsidePolygonGeo(car.CurrentLocation, p.Close)
+	isInsideOpenGeo := isInsidePolygonGeo(car.CurrentLocation, p.Open)
 
-	if len(car.GarageDoor.PolygonGeofence.Close) > 0 && car.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
+	if len(p.Close) > 0 && car.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
 		action = ActionClose
-	} else if len(car.GarageDoor.PolygonGeofence.Open) > 0 && !car.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
+	} else if len(p.Open) > 0 && !car.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
 		action = ActionOpen
 	}
 
@@ -142,5 +144,22 @@ func loadKMLFile(p *PolygonGeofence) error {
 		}
 	}
 
+	return nil
+}
+
+func (p *PolygonGeofence) parseSettings(config map[string]interface{}) error {
+	yamlData, err := yaml.Marshal(config)
+	var settings PolygonGeofence
+	if err != nil {
+		return fmt.Errorf("failed to marhsal geofence yaml object, error: %v", err)
+	}
+	err = yaml.Unmarshal(yamlData, &settings)
+	if err != nil {
+		return fmt.Errorf("failed to unmarhsal geofence yaml object, error: %v", err)
+	}
+	*p = settings
+	if p.KMLFile != "" {
+		return loadKMLFile(p)
+	}
 	return nil
 }
