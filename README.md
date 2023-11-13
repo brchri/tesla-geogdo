@@ -1,8 +1,3 @@
-# WARNING
-Since Tesla firmware version `2023.38.1`, [users have been reporting issues with Teslamate](https://github.com/adriankumpf/teslamate/issues/3371) due to Tesla API changes. At present, the author of Teslamate has been inactive on the repository since June 2023 and has yet to address, comment on, or acknowledge these problems, and it is unclear if the project is officially dead.
-
-For now, there has been a [fork of Teslamate](https://github.com/teslamate-fork/teslamate-fork#installation-of-the-fork-with-the-fix-for-tesla-fw-2023381) created that resolves the API issues that can be used for now. *You must either use this fork, implement the fix manually, or delay updating your vehcile to firmware `>=2023.38.1` for Tesla-GeoGDO to work*. Updates to the future of Teslamate can be followed in various Github issues, reddit threads, and discord servers. I will also try to post relevant updates here.
-
 # Tesla-GeoGDO
 A lightweight app that will operate your smart Garage Door Openers (GDOs) based on the location of your Tesla vehicles, automatically closing when you leave, and opening when you return. Supports multiple vehicles, geofence types, and smart GDO devices.
 
