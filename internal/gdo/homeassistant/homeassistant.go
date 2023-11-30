@@ -54,22 +54,24 @@ func NewHomeAssistantGdo(config map[string]interface{}) (httpGdo.HttpGdo, error)
 	if httpSettings, ok := config["settings"].(map[string]interface{}); ok {
 		httpSettings["commands"] = []map[string]interface{}{
 			{
-				"name":                 "open",
-				"endpoint":             "/api/services/cover/open_cover",
-				"http_method":          "post",
-				"body":                 `{"entity_id": "` + hassGdo.Settings.EntityId + `"}`,
-				"required_start_state": "close3",
+				"name":                  "open",
+				"endpoint":              "/api/services/cover/open_cover",
+				"http_method":           "post",
+				"body":                  `{"entity_id": "` + hassGdo.Settings.EntityId + `"}`,
+				"required_start_state":  "closed",
+				"required_finish_state": "open",
 				"headers": []string{
 					"Authorization: Bearer " + hassGdo.Settings.Connection.ApiKey,
 					"Content-Type: application/json",
 				},
 			},
 			{
-				"name":                 "close",
-				"endpoint":             "/api/services/cover/close_cover",
-				"http_method":          "post",
-				"body":                 `{"entity_id": "` + hassGdo.Settings.EntityId + `"}`,
-				"required_start_state": "open",
+				"name":                  "close",
+				"endpoint":              "/api/services/cover/close_cover",
+				"http_method":           "post",
+				"body":                  `{"entity_id": "` + hassGdo.Settings.EntityId + `"}`,
+				"required_start_state":  "open",
+				"required_finish_state": "closed",
 				"headers": []string{
 					"Authorization: Bearer " + hassGdo.Settings.Connection.ApiKey,
 					"Content-Type: application/json",

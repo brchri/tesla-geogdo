@@ -169,7 +169,7 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 			return fmt.Errorf("unable to get door state, received err: %v", err)
 		}
 		if h.State != "" && h.State != command.RequiredStartState {
-			logger.Warnf("Action and state mismatch: garage state is not valid for executing requested action; current state %s; requrested action: %s", h.State, action)
+			logger.Warnf("Action and state mismatch: garage state is not valid for executing requested action; current state %s; requested action: %s", h.State, action)
 			return nil
 		}
 	}
@@ -222,6 +222,9 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	start := time.Now()
 	for time.Since(start) < time.Duration(command.Timeout)*time.Second {
 		h.State, err = h.getDoorStatus()
+		if err == nil && h.Settings.Status.ExtractStatusCallback != nil {
+			h.State, err = h.Settings.Status.ExtractStatusCallback(h.State)
+		}
 		if err != nil {
 			logger.Debugf("Unable to get door state, received err: %v", err)
 			logger.Debugf("Will keep trying until timeout expires")
