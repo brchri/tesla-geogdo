@@ -22,6 +22,7 @@ type httpRequestData struct {
 	body     string
 	username string
 	password string
+	headers  []string
 }
 
 var sampleYaml = map[string]interface{}{
@@ -46,6 +47,9 @@ var sampleYaml = map[string]interface{}{
 				"required_start_state":  "closed",
 				"required_finish_state": "open",
 				"timeout":               5,
+				"headers": []string{
+					"mockAuth: Bearer somelongtoken",
+				},
 			}, {
 				"name":                  "close",
 				"endpoint":              "/close",
@@ -120,9 +124,10 @@ func mockServerHandler(w http.ResponseWriter, r *http.Request) {
 	body := string(bodyBytes)
 
 	httpRequest := httpRequestData{
-		method: r.Method,
-		path:   r.URL.Path,
-		body:   body,
+		method:  r.Method,
+		path:    r.URL.Path,
+		body:    body,
+		headers: r.Header.Values("mockAuth"),
 	}
 	httpRequest.username, httpRequest.password, _ = r.BasicAuth()
 
@@ -208,6 +213,7 @@ func Test_SetGarageDoor_Open_NoStatus(t *testing.T) {
 	assert.Equal(t, "/command", httpRequests[len(httpRequests)-1].path)
 	assert.Equal(t, "test-user", httpRequests[len(httpRequests)-1].username)
 	assert.Equal(t, "test-pass", httpRequests[len(httpRequests)-1].password)
+	assert.Equal(t, "Bearer somelongtoken", httpRequests[len(httpRequests)-1].headers[0])
 }
 
 // check SetGarageDoor with status checks

@@ -63,6 +63,9 @@ garage_doors:
           pass: pass # optional if basic auth is required
         status:
             endpoint: /status # optional, GET endpoint to retrieve current door status; expects simple return values like `open` or `closed`
+            headers: # optional, list of headers, each must be surrounded by single quotes
+              - 'Authorization: Bearer long_api_key' # example header
+              - 'Content-Type: application/json' # example header
         commands:
           # /command endpoint with a body to indicate the command type
           - name: open # name of command
@@ -72,6 +75,9 @@ garage_doors:
             required_start_state: closed # optional; if status endpoint is available, require this starting state to execute this command
             required_finish_state: open # optional; if status endpoint is available, require this stop state to confirm successful command execution
             timeout: 25 # optional, seconds to wait for garage door operation to complete if watching the status (default 30)
+            headers: # optional, list of headers, each must be surrounded by single quotes
+              - 'Authorization: Bearer long_api_key' # example header
+              - 'Content-Type: application/json' # example header
           # /close endpoint with no body required, as the endpoint /close defines the type
           - name: close
             endpoint: /close
@@ -80,5 +86,8 @@ garage_doors:
             required_start_state: open
             required_finish_state: closed
             timeout: 25
+            headers: # optional, list of headers, each must be surrounded by single quotes
+              - 'Authorization: Bearer long_api_key' # example header
+              - 'Content-Type: application/json' # example header
     cars:
       - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
