@@ -84,8 +84,12 @@ func CheckGeofence(car *Car) {
 	// get action based on either geo cross events or distance threshold cross events
 	action := car.GarageDoor.Geofence.getEventChangeAction(car)
 
-	if action == "" || car.GarageDoor.OpLock {
-		return // only execute if there's a valid action to execute and the garage door isn't on cooldown
+	if action == "" {
+		return // nothing to do
+	}
+	if car.GarageDoor.OpLock {
+		logger.Debugf("Garage operation is locked (due to either cooldown or current activity), will not execute action '%s'", action)
+		return
 	}
 
 	car.GarageDoor.OpLock = true // set lock so no other threads try to operate the garage before the cooldown period is complete
@@ -114,8 +118,15 @@ func CheckGeofence(car *Car) {
 			}
 		}
 
-		time.Sleep(time.Duration(util.Config.Global.OpCooldown) * time.Minute) // keep opLock true for OpCooldown minutes to prevent flapping in case of overlapping geofences
-		car.GarageDoor.OpLock = false                                          // release garage door's operation lock
+		if util.Config.Global.OpCooldown > 0 {
+			time.Sleep(time.Duration(util.Config.Global.OpCooldown) * time.Minute) // keep opLock true for OpCooldown minutes to prevent flapping in case of overlapping geofences
+		} else if os.Getenv("GDO_SKIP_FLAP_DELAY") != "true" {
+			// because lat and long are processed individually, it's possible that a car may flap briefly on the geofence crossing which can spam action calls to the gdo
+			// add a small sleep to prevent this
+			logger.Debugf("Garage for car %d retaining oplock for 5s to mitigate flapping when crossing geofence...", car.ID)
+			time.Sleep(5000 * time.Millisecond)
+		}
+		car.GarageDoor.OpLock = false // release garage door's operation lock
 	}()
 }
 
@@ -151,7 +162,7 @@ func ParseGarageDoorConfig() {
 
 		// initialize location update channel
 		for _, c := range g.Cars {
-			c.LocationUpdate = make(chan Point, 2)
+			c.LocationUpdate = make(chan Point)
 		}
 	}
 }

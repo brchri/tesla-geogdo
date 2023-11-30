@@ -1,6 +1,7 @@
 package geo
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -50,6 +51,8 @@ func init() {
 	polygonGeofence, _ = polygonCar.GarageDoor.Geofence.(*PolygonGeofence) // type cast geofence interface
 
 	util.Config.Global.OpCooldown = 0
+
+	os.Setenv("GDO_SKIP_FLAP_DELAY", "true") // for testing, skip 1.5s delay after gdo ops meant to prevent spam from flapping
 }
 
 func Test_getEventChangeAction_Circular(t *testing.T) {

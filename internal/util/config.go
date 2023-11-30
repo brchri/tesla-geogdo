@@ -59,7 +59,13 @@ func formatLevel(level logger.Level) string {
 // 01/02/2006 15:04:05 [LEVEL] Message...
 func (f *CustomFormatter) Format(entry *logger.Entry) ([]byte, error) {
 	// Use the timestamp from the log entry to format it as you like
-	timestamp := entry.Time.Format("01/02/2006 15:04:05")
+	var timestamp string
+	if os.Getenv("DEBUG") == "true" {
+		// include milliseconds for debug
+		timestamp = entry.Time.Format("01/02/2006 15:04:05.000")
+	} else {
+		timestamp = entry.Time.Format("01/02/2006 15:04:05")
+	}
 
 	// Ensure the log level string is always 5 characters
 	paddedLevel := formatLevel(entry.Level)
