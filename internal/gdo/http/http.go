@@ -19,7 +19,14 @@ type (
 	HttpGdo interface {
 		SetGarageDoor(string) error
 		ProcessShutdown()
+		// sets a callback function that should be used to extract the status from an endpoint
+		// http responses can be complex json blobs, and a simple `open` or `closed` is generally
+		// expected for status; the callback function, if set, will be used to extract that
+		// simple status from more complex responses
+		SetExtractStatusCallbackFunction(ExtractStatusCallback)
 	}
+
+	ExtractStatusCallback func(string) (string, error)
 
 	httpGdo struct {
 		Settings struct {
@@ -32,7 +39,9 @@ type (
 				SkipTlsVerify bool   `yaml:"skip_tls_verify"`
 			} `yaml:"connection"`
 			Status struct {
-				Endpoint string `yaml:"endpoint"`
+				Endpoint              string   `yaml:"endpoint"`
+				Headers               []string `yaml:"headers"`
+				ExtractStatusCallback ExtractStatusCallback
 			} `yaml:"status"`
 			Commands []Command `yaml:"commands"`
 		} `yaml:"settings"`
@@ -43,13 +52,14 @@ type (
 	}
 
 	Command struct {
-		Name                string `yaml:"name"` // e.g. `open` or `close`
-		Endpoint            string `yaml:"endpoint"`
-		HttpMethod          string `yaml:"http_method"`
-		Body                string `yaml:"body"`
-		RequiredStartState  string `yaml:"required_start_state"`  // if set, garage door will not operate if current state does not equal this
-		RequiredFinishState string `yaml:"required_finish_state"` // if set, garage door will monitor the door state compared to this value to determine success
-		Timeout             int    `yaml:"timeout"`               // time to wait for garage door to operate if monitored
+		Name                string   `yaml:"name"` // e.g. `open` or `close`
+		Endpoint            string   `yaml:"endpoint"`
+		Headers             []string `yaml:"headers"`
+		HttpMethod          string   `yaml:"http_method"`
+		Body                string   `yaml:"body"`
+		RequiredStartState  string   `yaml:"required_start_state"`  // if set, garage door will not operate if current state does not equal this
+		RequiredFinishState string   `yaml:"required_finish_state"` // if set, garage door will monitor the door state compared to this value to determine success
+		Timeout             int      `yaml:"timeout"`               // time to wait for garage door to operate if monitored
 	}
 )
 
@@ -99,6 +109,10 @@ func NewHttpGdo(config map[string]interface{}) (HttpGdo, error) {
 	}
 
 	return httpGdo, httpGdo.ValidateMinimumHttpSettings()
+}
+
+func (h *httpGdo) SetExtractStatusCallbackFunction(fn ExtractStatusCallback) {
+	h.Settings.Status.ExtractStatusCallback = fn
 }
 
 // will validate that the minimum mqtt settings are defined,
@@ -152,13 +166,21 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	if command.RequiredStartState != "" && h.Settings.Status.Endpoint != "" {
 		var err error
 		h.State, err = h.getDoorStatus()
+		if err == nil && h.Settings.Status.ExtractStatusCallback != nil {
+			h.State, err = h.Settings.Status.ExtractStatusCallback(h.State)
+		}
 		if err != nil {
 			return fmt.Errorf("unable to get door state, received err: %v", err)
 		}
 		if h.State != "" && h.State != command.RequiredStartState {
-			logger.Warnf("Action and state mismatch: garage state is not valid for executing requested action; current state %s; requrested action: %s", h.State, action)
+			logger.Warnf("Action and state mismatch: garage state is not valid for executing requested action; current state %s; requested action: %s", h.State, action)
 			return nil
 		}
+	}
+
+	if util.Config.Testing {
+		logger.Infof("TESTING flag set - Would attempt action %v", action)
+		return nil
 	}
 
 	// start building url and http client
@@ -171,6 +193,8 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	if err != nil {
 		return fmt.Errorf("unable to create http request, received err: %v", err)
 	}
+
+	addHeadersToReq(req, command.Headers)
 
 	// set basic auth credentials if rqeuired
 	if h.Settings.Connection.User != "" || h.Settings.Connection.Pass != "" {
@@ -207,6 +231,9 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	start := time.Now()
 	for time.Since(start) < time.Duration(command.Timeout)*time.Second {
 		h.State, err = h.getDoorStatus()
+		if err == nil && h.Settings.Status.ExtractStatusCallback != nil {
+			h.State, err = h.Settings.Status.ExtractStatusCallback(h.State)
+		}
 		if err != nil {
 			logger.Debugf("Unable to get door state, received err: %v", err)
 			logger.Debugf("Will keep trying until timeout expires")
@@ -244,6 +271,8 @@ func (h *httpGdo) getDoorStatus() (string, error) {
 		req.SetBasicAuth(h.Settings.Connection.User, h.Settings.Connection.Pass)
 	}
 
+	addHeadersToReq(req, h.Settings.Status.Headers)
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -262,6 +291,17 @@ func (h *httpGdo) getDoorStatus() (string, error) {
 
 	return string(body), nil
 
+}
+
+func addHeadersToReq(req *http.Request, headers []string) {
+	for _, h := range headers {
+		keyValPair := strings.SplitN(h, ":", 2)
+		if len(keyValPair) != 2 {
+			logger.Warnf("Unable to parse header %s", h)
+			continue
+		}
+		req.Header.Add(keyValPair[0], keyValPair[1])
+	}
 }
 
 // stubbed function for rquired interface, no shutdown routines required for this package
