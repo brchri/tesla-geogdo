@@ -19,6 +19,10 @@ type (
 	HttpGdo interface {
 		SetGarageDoor(string) error
 		ProcessShutdown()
+		// sets a callback function that should be used to extract the status from an endpoint
+		// http responses can be complex json blobs, and a simple `open` or `closed` is generally
+		// expected for status; the callback function, if set, will be used to extract that
+		// simple status from more complex responses
 		SetExtractStatusCallbackFunction(ExtractStatusCallback)
 	}
 
