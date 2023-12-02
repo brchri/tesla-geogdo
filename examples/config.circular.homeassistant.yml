@@ -1,4 +1,4 @@
-# This is an example config file with all available options and explanations for circular geofence and ratgdo opener types.
+# This is an example config file with all available options and explanations for circular geofence and homeassistant opener types.
 
 ## NOTE ##
 # Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
