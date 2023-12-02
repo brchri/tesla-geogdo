@@ -35,6 +35,7 @@ garage_doors:
           use_tls: false # optional, instructs app to connect to home assistant using tls (defaults to false)
           skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on home assistant
         entity_id: cover.main_door # id for the garage door entity in home assistant, can be found by adding '/config/entities' to the base url in home assistant
+        enable_status_checks: true # set to true if gdo supports garage states (e.g. garage is closed)
     cars: # list of cars that use this garage door
       - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
       - teslamate_car_id: 2 # id used for the second vehicle in TeslaMate's MQTT broker

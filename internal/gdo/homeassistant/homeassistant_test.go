@@ -17,7 +17,8 @@ var sampleYaml = map[string]interface{}{
 			"use_tls":         false,
 			"skip_tls_verify": false,
 		},
-		"entity_id": "cover.main_cover",
+		"entity_id":            "cover.main_cover",
+		"enable_status_checks": true,
 	},
 }
 

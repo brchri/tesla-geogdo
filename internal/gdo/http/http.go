@@ -174,6 +174,11 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 		}
 	}
 
+	if util.Config.Testing {
+		logger.Infof("TESTING flag set - Would attempt action %v", action)
+		return nil
+	}
+
 	// start building url and http client
 	url := "http"
 	if h.Settings.Connection.UseTls {

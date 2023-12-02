@@ -17,7 +17,8 @@ type HomeAssistant struct {
 		Connection struct {
 			ApiKey string `yaml:"api_key"`
 		} `yaml:"connection"`
-		EntityId string `yaml:"entity_id"`
+		EntityId           string `yaml:"entity_id"`
+		EnableStatusChecks bool   `yaml:"enable_status_checks"`
 	} `yaml:"settings"`
 }
 
@@ -47,7 +48,7 @@ func NewHomeAssistantGdo(config map[string]interface{}) (httpGdo.HttpGdo, error)
 	}
 	err = yaml.Unmarshal(yamlData, &hassGdo)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal garage doors yaml object")
+		logger.Fatal("Failed to unmarshal garage doors yaml object")
 	}
 
 	// add homeassistant-specific http settings to the config object
@@ -79,12 +80,14 @@ func NewHomeAssistantGdo(config map[string]interface{}) (httpGdo.HttpGdo, error)
 			},
 		}
 
-		httpSettings["status"] = map[string]interface{}{
-			"endpoint": "/api/states/" + hassGdo.Settings.EntityId,
-			"headers": []string{
-				"Authorization: Bearer " + hassGdo.Settings.Connection.ApiKey,
-				"Content-Type: application/json",
-			},
+		if hassGdo.Settings.EnableStatusChecks {
+			httpSettings["status"] = map[string]interface{}{
+				"endpoint": "/api/states/" + hassGdo.Settings.EntityId,
+				"headers": []string{
+					"Authorization: Bearer " + hassGdo.Settings.Connection.ApiKey,
+					"Content-Type: application/json",
+				},
+			}
 		}
 	}
 
