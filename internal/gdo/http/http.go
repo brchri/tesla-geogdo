@@ -92,7 +92,7 @@ func NewHttpGdo(config map[string]interface{}) (HttpGdo, error) {
 		logger.Fatal("Failed to unmarhsal garage doors yaml object")
 	}
 
-	// set port if not set explicitly int he config
+	// set port if not set explicitly in the config
 	if httpGdo.Settings.Connection.Port == 0 {
 		if httpGdo.Settings.Connection.UseTls {
 			httpGdo.Settings.Connection.Port = defaultHttpsPort
