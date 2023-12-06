@@ -20,19 +20,21 @@ A lightweight app that will operate your smart Garage Door Openers (GDOs) based 
 <!-- /TOC -->
 
 ## Supported Smart Garage Door Openers
-* Current
-  * Any [Home Assistant](https://www.home-assistant.io/) Controlled Garage Door Opener
-    * Controlled by proxying commands through Home Assistant
-  * Any [Homebridge](https://homebridge.io/) Controlled Garage Door Opener
-    * Controlled by proxying commands through Homebridge
-  * [ratgdo](https://paulwieland.github.io/ratgdo/) (MQTT Configuration)
-  * Generic MQTT Controlled Smart Garage Door Openers
-  * Generic HTTP Controlled Smart Garage Door Openers
-* Deprecated:
-  * MyQ
-    * No longer supported due to MyQ API changes blocking 3rd party integrations
-* Potentially Upcoming
-  * [Meross](https://www.meross.com/en-gc/product) (if I get my hands on one or can use someone else's package to incorporate)
+### Current
+* Any Garage Door Opener managed by [Home Assistant](https://www.home-assistant.io/)
+  * Controlled by proxying commands through Home Assistant
+* Any Garage Door Opener managed by [Homebridge](https://homebridge.io/)
+  * Controlled by proxying commands through Homebridge
+* Native [ratgdo](https://paulwieland.github.io/ratgdo/) (MQTT-based firmware)
+  * Support also available for ratgdo using ESP Home firmware and managed by Home Assistant or Homebridge
+* Generic MQTT Controlled Smart Garage Door Openers
+* Generic HTTP Controlled Smart Garage Door Openers
+### Deprecated:
+* MyQ
+  * No longer supported due to MyQ API changes blocking 3rd party integrations
+### Potentially Upcoming
+* Native [Meross](https://www.meross.com/en-gc/product) (if I get my hands on one or can use someone else's package to incorporate)
+  * Meross GDO's that are managed by Home Assistant or Homebridge *are currently supported*
 
 ## Prerequisite
 This app uses the MQTT broker bundled with [TeslaMate](https://github.com/adriankumpf/teslamate). You must be running TeslaMate and have the MQTT broker exposed for consumption to use this app. TeslaMate has done a lot of work in scraping API data while minimizing vampire drain on vehicles from API requests, and TeslaMate has many other features that make it more than worthwhile to use in addition to this app.
@@ -226,4 +228,3 @@ There's a configurable `cooldown` parameter in the `config.yml` file's `global` 
 
 ## Credits
 * [TeslaMate](https://github.com/adriankumpf/teslamate)
-* [Ratgdo](https://paulwieland.github.io/ratgdo/)
