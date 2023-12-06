@@ -23,6 +23,8 @@ A lightweight app that will operate your smart Garage Door Openers (GDOs) based 
 * Current
   * Any [Home Assistant](https://www.home-assistant.io/) Controlled Garage Door Opener
     * Controlled by proxying commands through Home Assistant
+  * Any [Homebridge](https://homebridge.io/) Controlled Garage Door Opener
+    * Controlled by proxying commands through Homebridge
   * [ratgdo](https://paulwieland.github.io/ratgdo/) (MQTT Configuration)
   * Generic MQTT Controlled Smart Garage Door Openers
   * Generic HTTP Controlled Smart Garage Door Openers
