@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/brchri/tesla-geogdo/internal/gdo/homeassistant"
+	"github.com/brchri/tesla-geogdo/internal/gdo/homebridge"
 	"github.com/brchri/tesla-geogdo/internal/gdo/http"
 	"github.com/brchri/tesla-geogdo/internal/gdo/mqtt"
 	"github.com/brchri/tesla-geogdo/internal/gdo/ratgdo"
@@ -32,6 +33,8 @@ func Initialize(config map[string]interface{}) (GDO, error) {
 		return http.Initialize(config)
 	case "homeassistant":
 		return homeassistant.Initialize(config)
+	case "homebridge":
+		return homebridge.Initialize(config)
 	default:
 		return nil, fmt.Errorf("gdo type %s not recognized", typeValue)
 	}
