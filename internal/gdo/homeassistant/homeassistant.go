@@ -98,14 +98,14 @@ func NewHomeAssistantGdo(config map[string]interface{}) (httpGdo.HttpGdo, error)
 	}
 
 	// set callback function for httpGdo object to parse returned garage status
-	h.SetExtractStatusCallbackFunction(ExtractStatusCallback)
+	h.SetParseStatusResponseFunc(ParseStatusResponse)
 
 	return h, nil
 }
 
 // define a callback function for the httpGdo package to extract the garage status from the returned json
 // all that's needed is the json value for the `state` key
-func ExtractStatusCallback(status string) (string, error) {
+func ParseStatusResponse(status string) (string, error) {
 	type statusResponse struct {
 		State string `json:"state"`
 	}

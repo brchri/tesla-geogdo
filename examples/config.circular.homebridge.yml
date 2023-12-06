@@ -1,0 +1,49 @@
+# This is an example config file with all available options and explanations for circular geofence and homeassistant opener types.
+
+## NOTE ##
+# Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
+
+global:
+  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+    connection:
+      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      port: 1883
+      client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
+      user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
+      pass: mqtt_pass # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_PASS
+      use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
+      skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
+  cooldown: 5 # minutes to wait after operating garage before allowing another garage operation (set to 0 or omit to disable)
+
+garage_doors:
+  - # main garage example
+    geofence: # circular geofence with a center point, open and close distances (radii)
+      type: circular
+      settings:
+        center:
+          lat: 46.19290425661381
+          lng: -123.79965087116439
+        close_distance: .013 # distance in kilometers car must travel away from garage location to close garage door
+        open_distance: .04 # distance in kilometers car must be in range of garage location while traveling closer to it to open garage door
+    opener:
+      type: homebridge # type of garage door opener to use
+      settings:
+        connection: # connection settings for homebridge
+          host: homebridge.local # dns, container name, or IP of homebridge
+          port: 8581 # optional, defaults to 8581
+          user: username # username for homebridge
+          pass: password # password for homebridge
+          use_tls: false # optional, instructs app to connect to homebridge using tls (defaults to false)
+          skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on homebridge
+        timeout: 30 # optional, time to wait for garage door action to complete
+        accessory:
+          unique_id: some_long_id # unique id for accessory; can be retrieved from /swagger page of homebridge with the /api/accessories endpoint
+          characteristics: # defines how to control the accessory
+            status: CurrentDoorState # optional, defines which characteristicType retrieves current door state
+            command: TargetDoorState # defines which characteristicType controls the door
+            values: # defines expected values for status and command characteristics
+              open: 0 # defines value for characteristic to open door
+              close: 1 # defines value for characteristic to close door
+    cars: # list of cars that use this garage door
+      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
+      - teslamate_car_id: 2 # id used for the second vehicle in TeslaMate's MQTT broker

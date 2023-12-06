@@ -23,10 +23,10 @@ type (
 		// http responses can be complex json blobs, and a simple `open` or `closed` is generally
 		// expected for status; the callback function, if set, will be used to extract that
 		// simple status from more complex responses
-		SetExtractStatusCallbackFunction(ExtractStatusCallback)
+		SetParseStatusResponseFunc(ParseStatusResponseFunc)
 	}
 
-	ExtractStatusCallback func(string) (string, error)
+	ParseStatusResponseFunc func(string) (string, error)
 
 	httpGdo struct {
 		Settings struct {
@@ -39,9 +39,9 @@ type (
 				SkipTlsVerify bool   `yaml:"skip_tls_verify"`
 			} `yaml:"connection"`
 			Status struct {
-				Endpoint              string   `yaml:"endpoint"`
-				Headers               []string `yaml:"headers"`
-				ExtractStatusCallback ExtractStatusCallback
+				Endpoint            string   `yaml:"endpoint"`
+				Headers             []string `yaml:"headers"`
+				ParseStatusResponse ParseStatusResponseFunc
 			} `yaml:"status"`
 			Commands []Command `yaml:"commands"`
 		} `yaml:"settings"`
@@ -92,7 +92,7 @@ func NewHttpGdo(config map[string]interface{}) (HttpGdo, error) {
 		logger.Fatal("Failed to unmarhsal garage doors yaml object")
 	}
 
-	// set port if not set explicitly int he config
+	// set port if not set explicitly in the config
 	if httpGdo.Settings.Connection.Port == 0 {
 		if httpGdo.Settings.Connection.UseTls {
 			httpGdo.Settings.Connection.Port = defaultHttpsPort
@@ -111,8 +111,8 @@ func NewHttpGdo(config map[string]interface{}) (HttpGdo, error) {
 	return httpGdo, httpGdo.ValidateMinimumHttpSettings()
 }
 
-func (h *httpGdo) SetExtractStatusCallbackFunction(fn ExtractStatusCallback) {
-	h.Settings.Status.ExtractStatusCallback = fn
+func (h *httpGdo) SetParseStatusResponseFunc(fn ParseStatusResponseFunc) {
+	h.Settings.Status.ParseStatusResponse = fn
 }
 
 // will validate that the minimum mqtt settings are defined,
@@ -166,8 +166,8 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	if command.RequiredStartState != "" && h.Settings.Status.Endpoint != "" {
 		var err error
 		h.State, err = h.getDoorStatus()
-		if err == nil && h.Settings.Status.ExtractStatusCallback != nil {
-			h.State, err = h.Settings.Status.ExtractStatusCallback(h.State)
+		if err == nil && h.Settings.Status.ParseStatusResponse != nil {
+			h.State, err = h.Settings.Status.ParseStatusResponse(h.State)
 		}
 		if err != nil {
 			return fmt.Errorf("unable to get door state, received err: %v", err)
@@ -231,8 +231,8 @@ func (h *httpGdo) SetGarageDoor(action string) error {
 	start := time.Now()
 	for time.Since(start) < time.Duration(command.Timeout)*time.Second {
 		h.State, err = h.getDoorStatus()
-		if err == nil && h.Settings.Status.ExtractStatusCallback != nil {
-			h.State, err = h.Settings.Status.ExtractStatusCallback(h.State)
+		if err == nil && h.Settings.Status.ParseStatusResponse != nil {
+			h.State, err = h.Settings.Status.ParseStatusResponse(h.State)
 		}
 		if err != nil {
 			logger.Debugf("Unable to get door state, received err: %v", err)
