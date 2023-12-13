@@ -45,32 +45,24 @@ func init() {
 	}
 }
 
-func (p *PolygonGeofence) GetMqttTopics(carId int) []string {
-	// doesn't care about carId, just needs to match interface signature
-	return []string{
-		util.Config.Global.MqttSettings.LatTopic,
-		util.Config.Global.MqttSettings.LngTopic,
-	}
-}
-
 // get action based on whether we had a polygon geofence change event
 // uses ray-casting algorithm, assumes a simple geofence (no holes or border cross points)
-func (p *PolygonGeofence) getEventChangeAction(car *Car) (action string) {
-	if !car.CurrentLocation.IsPointDefined() {
+func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string) {
+	if !tracker.CurrentLocation.IsPointDefined() {
 		return // need valid lat and long to check geofence
 	}
 
-	isInsideCloseGeo := isInsidePolygonGeo(car.CurrentLocation, p.Close)
-	isInsideOpenGeo := isInsidePolygonGeo(car.CurrentLocation, p.Open)
+	isInsideCloseGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Close)
+	isInsideOpenGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Open)
 
-	if len(p.Close) > 0 && car.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
+	if len(p.Close) > 0 && tracker.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
 		action = ActionClose
-	} else if len(p.Open) > 0 && !car.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
+	} else if len(p.Open) > 0 && !tracker.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
 		action = ActionOpen
 	}
 
-	car.InsidePolyCloseGeo = isInsideCloseGeo
-	car.InsidePolyOpenGeo = isInsideOpenGeo
+	tracker.InsidePolyCloseGeo = isInsideCloseGeo
+	tracker.InsidePolyOpenGeo = isInsideOpenGeo
 
 	return
 }

@@ -25,8 +25,8 @@ import (
 
 var (
 	configFile   string
-	cars         []*geo.Car            // list of all cars from all garage doors
-	version      string     = "v0.0.1" // pass -ldflags="-X main.version=<version>" at build time to set linker flag and bake in binary version
+	trackers     []*geo.Tracker            // list of all trackers from all garage doors
+	version      string         = "v0.0.1" // pass -ldflags="-X main.version=<version>" at build time to set linker flag and bake in binary version
 	commitHash   string
 	messageChan  chan mqtt.Message         // channel to receive mqtt messages
 	mqttSettings *util.MqttConnectSettings // point to util.Config.Global.MqttSettings.Connection for shorter reference
@@ -50,13 +50,13 @@ func init() {
 	geo.ParseGarageDoorConfig()
 	checkEnvVars()
 	for _, garageDoor := range geo.GarageDoors {
-		for _, car := range garageDoor.Cars {
-			car.GarageDoor = garageDoor
-			cars = append(cars, car)
-			car.InsidePolyCloseGeo = true // only relevent for polygon geos but won't be used if that's not the geofence type
-			car.InsidePolyOpenGeo = true  // only relevent for polygon geos but won't be used if that's not the geofence type
-			// start listening to car update location channels
-			go processLocationUpdates(car)
+		for _, tracker := range garageDoor.Trackers {
+			tracker.GarageDoor = garageDoor
+			trackers = append(trackers, tracker)
+			tracker.InsidePolyCloseGeo = true // only relevent for polygon geos but won't be used if that's not the geofence type
+			tracker.InsidePolyOpenGeo = true  // only relevent for polygon geos but won't be used if that's not the geofence type
+			// start listening to tracker update location channels
+			go processLocationUpdates(tracker)
 		}
 	}
 }
@@ -168,11 +168,11 @@ func main() {
 		case message := <-messageChan:
 			m := strings.Split(message.Topic(), "/")
 
-			// locate car and car's garage door
-			var car *geo.Car
-			for _, c := range cars {
+			// locate tracker and tracker's garage door
+			var tracker *geo.Tracker
+			for _, c := range trackers {
 				if fmt.Sprintf("%d", c.ID) == m[2] {
-					car = c
+					tracker = c
 					break
 				}
 			}
@@ -180,23 +180,23 @@ func main() {
 			// if lat or lng received, check geofence
 			switch m[3] {
 			case "geofence":
-				car.PrevGeofence = car.CurGeofence
-				car.CurGeofence = string(message.Payload())
-				logger.Infof("Received geo for car %d: %v", car.ID, car.CurGeofence)
-				go geo.CheckGeofence(car)
+				tracker.PrevGeofence = tracker.CurGeofence
+				tracker.CurGeofence = string(message.Payload())
+				logger.Infof("Received geo for tracker %d: %v", tracker.ID, tracker.CurGeofence)
+				go geo.CheckGeofence(tracker)
 			case "latitude":
-				logger.Debugf("Received lat for car %d: %v", car.ID, string(message.Payload()))
+				logger.Debugf("Received lat for tracker %d: %v", tracker.ID, string(message.Payload()))
 				lat, _ := strconv.ParseFloat(string(message.Payload()), 64)
 				go func(lat float64) {
 					// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
-					car.LocationUpdate <- geo.Point{Lat: lat, Lng: 0}
+					tracker.LocationUpdate <- geo.Point{Lat: lat, Lng: 0}
 				}(lat)
 			case "longitude":
-				logger.Debugf("Received long for car %d: %v", car.ID, string(message.Payload()))
+				logger.Debugf("Received long for tracker %d: %v", tracker.ID, string(message.Payload()))
 				lng, _ := strconv.ParseFloat(string(message.Payload()), 64)
 				go func(lng float64) {
 					// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
-					car.LocationUpdate <- geo.Point{Lat: 0, Lng: lng}
+					tracker.LocationUpdate <- geo.Point{Lat: 0, Lng: lng}
 				}(lng)
 			}
 
@@ -213,30 +213,34 @@ func main() {
 	}
 }
 
-// watches the LocationUpdate channel for a car and queues a CheckGeofence operation
+// watches the LocationUpdate channel for a tracker and queues a CheckGeofence operation
 // this allows threaded geofence checks for multiple vehicles, while each individual vehicle
 // does not have parallel threads executing checks
-func processLocationUpdates(car *geo.Car) {
-	for update := range car.LocationUpdate {
+func processLocationUpdates(tracker *geo.Tracker) {
+	for update := range tracker.LocationUpdate {
 		if update.Lat != 0 {
-			car.CurrentLocation.Lat = update.Lat
+			tracker.CurrentLocation.Lat = update.Lat
 		}
 		if update.Lng != 0 {
-			car.CurrentLocation.Lng = update.Lng
+			tracker.CurrentLocation.Lng = update.Lng
 		}
-		if car.CurrentLocation.IsPointDefined() {
-			geo.CheckGeofence(car)
+		if tracker.CurrentLocation.IsPointDefined() {
+			geo.CheckGeofence(tracker)
 		}
 	}
 }
 
 // subscribe to topics when MQTT client connects (or reconnects)
 func onMqttConnect(client mqtt.Client) {
-	for _, car := range cars {
-		logger.Infof("Subscribing to MQTT topics for car %d", car.ID)
+	for _, tracker := range trackers {
+		logger.Infof("Subscribing to MQTT topics for tracker %d", tracker.ID)
 
-		// define which topics are relevant for each car based on config
-		topics := car.GarageDoor.Geofence.GetMqttTopics(car.ID)
+		// define which topics are relevant for each tracker based on config
+
+		topics := []string{
+			tracker.LatTopic,
+			tracker.LngTopic,
+		}
 
 		// subscribe to topics
 		for _, topic := range topics {
@@ -254,7 +258,7 @@ func onMqttConnect(client mqtt.Client) {
 					logger.Debugf("Topic subscribed successfully: %s", topic)
 					break
 				} else {
-					logger.Infof("Failed to subscribe to topic %s for car %d, will make %d more attempts. Error: %v", topic, car.ID, retryAttempts, token.Error())
+					logger.Infof("Failed to subscribe to topic %s for tracker %d, will make %d more attempts. Error: %v", topic, tracker.ID, retryAttempts, token.Error())
 				}
 				time.Sleep(5 * time.Second)
 			}

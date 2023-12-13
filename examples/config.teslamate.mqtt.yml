@@ -54,5 +54,10 @@ garage_doors:
             topic_suffix: command/door
             required_start_state: open
             required_finish_state: closed
-    cars:
-      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
+    trackers:
+      - id: 1 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
+      - id: 2 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/2/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/2/longitude # topic to retrieve longitude for tracker

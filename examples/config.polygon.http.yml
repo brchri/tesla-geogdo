@@ -89,5 +89,7 @@ garage_doors:
             headers: # optional, list of headers, each must be surrounded by single quotes
               - 'Authorization: Bearer long_api_key' # example header
               - 'Content-Type: application/json' # example header
-    cars:
-      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
+    trackers:
+      - id: 1 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker

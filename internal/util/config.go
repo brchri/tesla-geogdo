@@ -14,8 +14,6 @@ type (
 		Global struct {
 			MqttSettings struct {
 				Connection MqttConnectSettings `yaml:"connection"`
-				LatTopic   string              `yaml:"lat_topic"`
-				LngTopic   string              `yaml:"lng_topic"`
 			} `yaml:"mqtt_settings"`
 			OpCooldown int `yaml:"cooldown"`
 		} `yaml:"global"`

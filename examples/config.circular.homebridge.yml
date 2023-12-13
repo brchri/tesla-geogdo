@@ -44,6 +44,10 @@ garage_doors:
             values: # defines expected values for status and command characteristics
               open: 0 # defines value for characteristic to open door
               close: 1 # defines value for characteristic to close door
-    cars: # list of cars that use this garage door
-      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
-      - teslamate_car_id: 2 # id used for the second vehicle in TeslaMate's MQTT broker
+    trackers:
+      - id: 1 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
+      - id: 2 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/2/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/2/longitude # topic to retrieve longitude for tracker

@@ -33,9 +33,13 @@ garage_doors:
           client_id: tesla-geogdo-ratgdo1
           # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
         topic_prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
-      - teslamate_car_id: 2
+    trackers:
+      - id: 1 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
+      - id: 2 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/2/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/2/longitude # topic to retrieve longitude for tracker
 
   - # 3rd car garage example
     geofence:
@@ -68,8 +72,10 @@ garage_doors:
             topic_suffix: command/door
             required_start_state: open
             required_finish_state: closed
-    cars:
-      - teslamate_car_id: 3
+    trackers:
+      - id: 3 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/3/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/3/longitude # topic to retrieve longitude for tracker
 
   - # 4th car detached garage example
     geofence:
@@ -97,5 +103,7 @@ garage_doors:
             body: 
             required_start_state: open
             required_finish_state: closed
-    cars:
-      - teslamate_car_id: 4
+    trackers:
+      - id: 4 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/4/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/4/longitude # topic to retrieve longitude for tracker
