@@ -236,7 +236,11 @@ func onMqttConnect(client mqtt.Client) {
 		logger.Infof("Subscribing to MQTT topics for car %d", car.ID)
 
 		// define which topics are relevant for each car based on config
-		topics := car.GarageDoor.Geofence.GetMqttTopics()
+		// topics := car.GarageDoor.Geofence.GetMqttTopics()
+		topics := []string{
+			util.Config.Global.MqttSettings.LatTopic,
+			util.Config.Global.MqttSettings.LngTopic,
+		}
 
 		// subscribe to topics
 		for _, topic := range topics {
