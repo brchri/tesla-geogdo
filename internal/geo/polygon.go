@@ -37,7 +37,10 @@ type (
 	}
 )
 
-var polygonMqttTopics = []string{"latitude", "longitude"}
+var polygonMqttTopics = []string{
+	util.Config.Global.MqttSettings.LatTopic,
+	util.Config.Global.MqttSettings.LngTopic,
+}
 
 func init() {
 	logger.SetFormatter(&util.CustomFormatter{})

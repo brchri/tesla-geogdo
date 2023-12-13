@@ -236,18 +236,14 @@ func onMqttConnect(client mqtt.Client) {
 		logger.Infof("Subscribing to MQTT topics for car %d", car.ID)
 
 		// define which topics are relevant for each car based on config
-		// topics := car.GarageDoor.Geofence.GetMqttTopics()
-		topics := []string{
-			util.Config.Global.MqttSettings.LatTopic,
-			util.Config.Global.MqttSettings.LngTopic,
-		}
+		topics := car.GarageDoor.Geofence.GetMqttTopics()
 
 		// subscribe to topics
 		for _, topic := range topics {
 			topicSubscribed := false
 			// retry topic subscription attempts with 1 sec delay between attempts
 			for retryAttempts := 5; retryAttempts > 0; retryAttempts-- {
-				fullTopic := fmt.Sprintf("teslamate/cars/%d/%s", car.ID, topic)
+				fullTopic := fmt.Sprintf("%s", topic)
 				logger.Debugf("Subscribing to topic: %s", fullTopic)
 				if token := client.Subscribe(
 					fullTopic,

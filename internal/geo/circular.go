@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	util "github.com/brchri/tesla-geogdo/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,7 +17,10 @@ type (
 	}
 )
 
-var circularMqttTopics = []string{"latitude", "longitude"}
+var circularMqttTopics = []string{
+	util.Config.Global.MqttSettings.LatTopic,
+	util.Config.Global.MqttSettings.LngTopic,
+}
 
 func (c *CircularGeofence) GetMqttTopics() []string {
 	return circularMqttTopics
