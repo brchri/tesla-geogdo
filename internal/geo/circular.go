@@ -17,13 +17,12 @@ type (
 	}
 )
 
-var circularMqttTopics = []string{
-	util.Config.Global.MqttSettings.LatTopic,
-	util.Config.Global.MqttSettings.LngTopic,
-}
-
-func (c *CircularGeofence) GetMqttTopics() []string {
-	return circularMqttTopics
+func (c *CircularGeofence) GetMqttTopics(carId int) []string {
+	// doesn't care about carId, just needs to match interface signature
+	return []string{
+		util.Config.Global.MqttSettings.LatTopic,
+		util.Config.Global.MqttSettings.LngTopic,
+	}
 }
 
 func distance(point1 Point, point2 Point) float64 {

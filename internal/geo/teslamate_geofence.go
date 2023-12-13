@@ -20,10 +20,8 @@ type (
 	}
 )
 
-var teslamateMqttTopics = []string{"geofence"}
-
-func (t *TeslamateGeofence) GetMqttTopics() []string {
-	return teslamateMqttTopics
+func (t *TeslamateGeofence) GetMqttTopics(carId int) []string {
+	return []string{fmt.Sprintf("teslamate/cars/%d/geofence", carId)}
 }
 
 // gets action based on if there was a relevant geofence event change

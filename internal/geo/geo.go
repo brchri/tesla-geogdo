@@ -49,7 +49,7 @@ type (
 		// and what action should be taken if those are different (indicating a crossing of geofences)
 		getEventChangeAction(*Car) string
 		// get teslamate mqtt topics relevant to the implemented geofence type
-		GetMqttTopics() []string
+		GetMqttTopics(carId int) []string
 		// parse the settings: of a geofence into the specific geofence type struct
 		parseSettings(map[string]interface{}) error
 	}

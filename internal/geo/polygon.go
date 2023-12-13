@@ -37,11 +37,6 @@ type (
 	}
 )
 
-var polygonMqttTopics = []string{
-	util.Config.Global.MqttSettings.LatTopic,
-	util.Config.Global.MqttSettings.LngTopic,
-}
-
 func init() {
 	logger.SetFormatter(&util.CustomFormatter{})
 	logger.SetOutput(os.Stdout)
@@ -50,8 +45,12 @@ func init() {
 	}
 }
 
-func (p *PolygonGeofence) GetMqttTopics() []string {
-	return polygonMqttTopics
+func (p *PolygonGeofence) GetMqttTopics(carId int) []string {
+	// doesn't care about carId, just needs to match interface signature
+	return []string{
+		util.Config.Global.MqttSettings.LatTopic,
+		util.Config.Global.MqttSettings.LngTopic,
+	}
 }
 
 // get action based on whether we had a polygon geofence change event

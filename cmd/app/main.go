@@ -236,23 +236,22 @@ func onMqttConnect(client mqtt.Client) {
 		logger.Infof("Subscribing to MQTT topics for car %d", car.ID)
 
 		// define which topics are relevant for each car based on config
-		topics := car.GarageDoor.Geofence.GetMqttTopics()
+		topics := car.GarageDoor.Geofence.GetMqttTopics(car.ID)
 
 		// subscribe to topics
 		for _, topic := range topics {
 			topicSubscribed := false
 			// retry topic subscription attempts with 1 sec delay between attempts
 			for retryAttempts := 5; retryAttempts > 0; retryAttempts-- {
-				fullTopic := fmt.Sprintf("%s", topic)
-				logger.Debugf("Subscribing to topic: %s", fullTopic)
+				logger.Debugf("Subscribing to topic: %s", topic)
 				if token := client.Subscribe(
-					fullTopic,
+					topic,
 					0,
 					func(client mqtt.Client, message mqtt.Message) {
 						messageChan <- message
 					}); token.Wait() && token.Error() == nil {
 					topicSubscribed = true
-					logger.Debugf("Topic subscribed successfully: %s", fullTopic)
+					logger.Debugf("Topic subscribed successfully: %s", topic)
 					break
 				} else {
 					logger.Infof("Failed to subscribe to topic %s for car %d, will make %d more attempts. Error: %v", topic, car.ID, retryAttempts, token.Error())
