@@ -17,8 +17,9 @@ type (
 			} `yaml:"teslamate_mqtt_settings"`
 			OpCooldown int `yaml:"cooldown"`
 		} `yaml:"global"`
-		GarageDoors []*map[string]interface{} `yaml:"garage_doors"` // this will be parsed properly later by the geo package
-		Testing     bool
+		GarageDoors  []*map[string]interface{} `yaml:"garage_doors"` // this will be parsed properly later by the geo package
+		Testing      bool
+		MasterOpLock bool
 	}
 
 	MqttConnectSettings struct {

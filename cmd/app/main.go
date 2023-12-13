@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -30,6 +31,7 @@ var (
 	commitHash   string
 	messageChan  chan mqtt.Message         // channel to receive mqtt messages
 	mqttSettings *util.MqttConnectSettings // point to util.Config.Global.MqttSettings.Connection for shorter reference
+	pauseChan    chan int                  // handles sending message to goroutine that pauses operations based on api calls
 )
 
 func init() {
@@ -94,6 +96,12 @@ func parseArgs() {
 }
 
 func main() {
+
+	pauseChan = make(chan int)
+	http.HandleFunc("/pause", apiPauseHandler)
+	http.HandleFunc("/resume", apiPauseHandler)
+	http.ListenAndServe(":8555", nil)
+
 	messageChan = make(chan mqtt.Message)
 
 	logger.Debug("Setting MQTT Opts:")
@@ -286,5 +294,67 @@ func checkEnvVars() {
 	}
 	if value, exists := os.LookupEnv("DEBUG"); exists {
 		logger.Debugf("  DEBUG=%s", value)
+	}
+}
+
+func apiPauseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.URL.Path == "/resume" {
+		resumeOperations()
+		return
+	}
+
+	query := r.URL.Query()
+	duration := query.Get("duration")
+	var durationInt int
+	if duration != "" && duration != "0" {
+		var err error
+		durationInt, err = strconv.Atoi(duration)
+		if err != nil {
+			http.Error(w, "Invalid duration parameter", http.StatusBadRequest)
+			return
+		}
+	}
+	pauseOperations(durationInt)
+}
+
+func pauseOperations(duration int) {
+	logger.Infof("Received request to pause operations, pausing for %d seconds", duration)
+	if util.Config.MasterOpLock {
+		pauseChan <- duration
+		return
+	}
+	util.Config.MasterOpLock = true
+	if duration > 0 {
+		go func() {
+			for ; duration > 0; duration-- {
+				time.Sleep(1 * time.Second)
+
+				// non-blocking select to check for channel message indicating a resume api call has been made and we can break the loop
+				select {
+				case msg := <-pauseChan:
+					if msg > 0 {
+						duration = msg
+					} else {
+						return
+					}
+				default:
+				}
+			}
+			logger.Debug("Pause duration reached; unpausing operation")
+			util.Config.MasterOpLock = false
+		}()
+	}
+}
+
+func resumeOperations() {
+	logger.Info("Received request to resume operations")
+	if util.Config.MasterOpLock {
+		pauseChan <- 0 // send signal to pause timeout loop it's no longer needed
+		util.Config.MasterOpLock = false
 	}
 }
