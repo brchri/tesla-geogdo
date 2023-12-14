@@ -4,9 +4,9 @@
 # Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
 
 global:
-  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+  mqtt_settings: # settings for tracker mqtt broker
     connection:
-      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      host: localhost # dns, container name, or IP of tracker mqtt host
       port: 1883
       client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
       user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
@@ -26,7 +26,7 @@ garage_doors:
         open_trigger: # define which geofence changes trigger an open action (e.g. moving from `not_home` geofence to `home`)
           from: not_home
           to: home
-    opener:
+    opener:  # defines how to control the garage
       type: mqtt # type of garage door opener to use
       settings:
         connection:
@@ -54,7 +54,7 @@ garage_doors:
             topic_suffix: command/door
             required_start_state: open
             required_finish_state: closed
-    trackers:
+    trackers: # defines which trackers should be used to operate garage
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker

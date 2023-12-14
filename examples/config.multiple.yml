@@ -7,7 +7,7 @@
 # Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
 
 global:
-  teslamate_mqtt_settings:
+  mqtt_settings:
     connection: &mqtt_connection_settings
       host: localhost
       port: 1883
@@ -24,7 +24,7 @@ garage_doors:
           lng: -123.79965087116439
         close_distance: .013
         open_distance: .04
-    opener:
+    opener:  # defines how to control the garage
       type: ratgdo
       mqtt_settings:
         connection:
@@ -33,7 +33,7 @@ garage_doors:
           client_id: tesla-geogdo-ratgdo1
           # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
         topic_prefix: home/garage/Main
-    trackers:
+    trackers: # defines which trackers should be used to operate garage
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
@@ -51,7 +51,7 @@ garage_doors:
         open_trigger:
           from: not_home
           to: home
-    opener:
+    opener:  # defines how to control the garage
       type: mqtt
       settings:
         connection:
@@ -72,7 +72,7 @@ garage_doors:
             topic_suffix: command/door
             required_start_state: open
             required_finish_state: closed
-    trackers:
+    trackers: # defines which trackers should be used to operate garage
       - id: 3 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/3/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/3/longitude # topic to retrieve longitude for tracker
@@ -82,7 +82,7 @@ garage_doors:
       type: polygon
       settings:
         kml_file: ../../resources/polygon_map.kml
-    opener:
+    opener:  # defines how to control the garage
       type: http
       settings:
         connection:
@@ -103,7 +103,7 @@ garage_doors:
             body: 
             required_start_state: open
             required_finish_state: closed
-    trackers:
+    trackers: # defines which trackers should be used to operate garage
       - id: 4 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/4/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/4/longitude # topic to retrieve longitude for tracker
