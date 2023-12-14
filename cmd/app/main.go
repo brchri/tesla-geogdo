@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -166,38 +167,50 @@ func main() {
 	for {
 		select {
 		case message := <-messageChan:
-			m := strings.Split(message.Topic(), "/")
 
-			// locate tracker and tracker's garage door
-			var tracker *geo.Tracker
-			for _, c := range trackers {
-				if fmt.Sprintf("%d", c.ID) == m[2] {
-					tracker = c
-					break
+		topic:
+			// check if topic matches any trackers and execute action
+			for _, t := range trackers {
+				var point geo.Point
+				var err error
+				switch message.Topic() {
+				case t.LatTopic:
+					logger.Debugf("Received lat for tracker %v: %v", t.ID, string(message.Payload()))
+					point.Lat, err = strconv.ParseFloat(string(message.Payload()), 64)
+					if err != nil {
+						logger.Errorf("could not parse lat for tracker %v, received error %e", t.ID, err)
+						break topic
+					}
+				case t.LngTopic:
+					logger.Debugf("Received long for tracker %v: %v", t.ID, string(message.Payload()))
+					point.Lng, err = strconv.ParseFloat(string(message.Payload()), 64)
+					if err != nil {
+						logger.Errorf("could not parse long for tracker %v, received error %e", t.ID, err)
+						break topic
+					}
+				case t.GeofenceTopic:
+					t.PrevGeofence = t.CurGeofence
+					t.CurGeofence = string(message.Payload())
+					logger.Infof("Received geo for tracker %v: %v", t.ID, t.CurGeofence)
+					go geo.CheckGeofence(t)
+					break topic
+				case t.ComplexTopic.Topic:
+					logger.Debugf("Received payload for complex toipc %s for tracker %v", message.Topic(), t.ID)
+					point, err = processComplexTopicPayload(t, string(message.Payload()))
+					if err != nil {
+						logger.Errorf("could not parse complex topic for tracker %v, received error %e", t.ID, err)
+						break topic
+					}
 				}
-			}
 
-			// if lat or lng received, check geofence
-			switch m[3] {
-			case "geofence":
-				tracker.PrevGeofence = tracker.CurGeofence
-				tracker.CurGeofence = string(message.Payload())
-				logger.Infof("Received geo for tracker %d: %v", tracker.ID, tracker.CurGeofence)
-				go geo.CheckGeofence(tracker)
-			case "latitude":
-				logger.Debugf("Received lat for tracker %d: %v", tracker.ID, string(message.Payload()))
-				lat, _ := strconv.ParseFloat(string(message.Payload()), 64)
-				go func(lat float64) {
-					// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
-					tracker.LocationUpdate <- geo.Point{Lat: lat, Lng: 0}
-				}(lat)
-			case "longitude":
-				logger.Debugf("Received long for tracker %d: %v", tracker.ID, string(message.Payload()))
-				lng, _ := strconv.ParseFloat(string(message.Payload()), 64)
-				go func(lng float64) {
-					// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
-					tracker.LocationUpdate <- geo.Point{Lat: 0, Lng: lng}
-				}(lng)
+				// if a point is now defined, process a location update and stop looking for matching topics
+				if point != (geo.Point{}) {
+					go func(p geo.Point) {
+						// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
+						t.LocationUpdate <- point
+					}(point)
+					break topic
+				}
 			}
 
 		case <-signalChannel:
@@ -213,18 +226,41 @@ func main() {
 	}
 }
 
+func processComplexTopicPayload(tracker *geo.Tracker, payload string) (geo.Point, error) {
+	var jsonData map[string]interface{}
+	err := json.Unmarshal([]byte(payload), &jsonData)
+	if err != nil {
+		return geo.Point{}, fmt.Errorf("could not unmarshal json string to map object")
+	}
+	lat, ok := jsonData[tracker.ComplexTopic.LatJsonKey].(float64)
+	if !ok {
+		return geo.Point{}, fmt.Errorf("could not parse latitude from json payload")
+	}
+	lng, ok := jsonData[tracker.ComplexTopic.LngJsonKey].(float64)
+	if !ok {
+		return geo.Point{}, fmt.Errorf("could not parse longitude from json payload")
+	}
+	return geo.Point{
+		Lat: lat,
+		Lng: lng,
+	}, nil
+}
+
 // watches the LocationUpdate channel for a tracker and queues a CheckGeofence operation
 // this allows threaded geofence checks for multiple vehicles, while each individual vehicle
 // does not have parallel threads executing checks
 func processLocationUpdates(tracker *geo.Tracker) {
 	for update := range tracker.LocationUpdate {
+		var newLocation bool
 		if update.Lat != 0 {
 			tracker.CurrentLocation.Lat = update.Lat
+			newLocation = true
 		}
 		if update.Lng != 0 {
 			tracker.CurrentLocation.Lng = update.Lng
+			newLocation = true
 		}
-		if tracker.CurrentLocation.IsPointDefined() {
+		if newLocation && tracker.CurrentLocation.IsPointDefined() {
 			geo.CheckGeofence(tracker)
 		}
 	}
@@ -237,9 +273,18 @@ func onMqttConnect(client mqtt.Client) {
 
 		// define which topics are relevant for each tracker based on config
 
-		topics := []string{
+		possibleTopics := []string{
 			tracker.LatTopic,
 			tracker.LngTopic,
+			tracker.ComplexTopic.Topic,
+		}
+
+		// need to remove any undefined topics
+		topics := []string{}
+		for _, t := range possibleTopics {
+			if t != "" {
+				topics = append(topics, t)
+			}
 		}
 
 		// subscribe to topics

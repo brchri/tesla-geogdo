@@ -30,6 +30,12 @@ type (
 		InsidePolyCloseGeo bool        // indicates if tracker is currently inside the polygon_close_geofence
 		LatTopic           string      `yaml:"lat_topic"`
 		LngTopic           string      `yaml:"lng_topic"`
+		GeofenceTopic      string      `yaml:"geofence_topic"` // topic for publishing a geofence name where a tracker resides, e.g. teslamate geofence indicating 'home' or 'not_home'
+		ComplexTopic       struct {
+			Topic      string `yaml:"topic"`
+			LatJsonKey string `yaml:"lat_json_key"`
+			LngJsonKey string `yaml:"lng_json_key"`
+		} `yaml:"complex_topic"`
 	}
 
 	// defines a garage door with one unique geofence type: circular, teslamate, or polygon

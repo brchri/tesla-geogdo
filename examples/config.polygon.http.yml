@@ -93,3 +93,7 @@ garage_doors:
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
+        complex_topic: # if topic combines lat and long into single topic with json payload, define this instead of lat_topic and lng_topic
+          topic: some/complex/topic # topic where complex payload is published
+          lat_json_key: "lat" # json key for latitude
+          lng_json_key: "lon" # json key for longitude
