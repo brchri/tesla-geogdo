@@ -177,17 +177,9 @@ func main() {
 				case t.LatTopic:
 					logger.Debugf("Received lat for tracker %v: %v", t.ID, string(message.Payload()))
 					point.Lat, err = strconv.ParseFloat(string(message.Payload()), 64)
-					if err != nil {
-						logger.Errorf("could not parse lat for tracker %v, received error %e", t.ID, err)
-						break topic
-					}
 				case t.LngTopic:
 					logger.Debugf("Received long for tracker %v: %v", t.ID, string(message.Payload()))
 					point.Lng, err = strconv.ParseFloat(string(message.Payload()), 64)
-					if err != nil {
-						logger.Errorf("could not parse long for tracker %v, received error %e", t.ID, err)
-						break topic
-					}
 				case t.GeofenceTopic:
 					t.PrevGeofence = t.CurGeofence
 					t.CurGeofence = string(message.Payload())
@@ -197,10 +189,11 @@ func main() {
 				case t.ComplexTopic.Topic:
 					logger.Debugf("Received payload for complex toipc %s for tracker %v", message.Topic(), t.ID)
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
-					if err != nil {
-						logger.Errorf("could not parse complex topic for tracker %v, received error %e", t.ID, err)
-						break topic
-					}
+				}
+
+				if err != nil {
+					logger.Errorf("could not parse message payload from topic for tracker %v, received error %e\nmessage payload: %s", t.ID, err, message.Payload())
+					break topic
 				}
 
 				// if a point is now defined, process a location update and stop looking for matching topics
@@ -228,22 +221,24 @@ func main() {
 
 func processComplexTopicPayload(tracker *geo.Tracker, payload string) (geo.Point, error) {
 	var jsonData map[string]interface{}
+	var p geo.Point
 	err := json.Unmarshal([]byte(payload), &jsonData)
 	if err != nil {
 		return geo.Point{}, fmt.Errorf("could not unmarshal json string to map object")
 	}
 	lat, ok := jsonData[tracker.ComplexTopic.LatJsonKey].(float64)
-	if !ok {
-		return geo.Point{}, fmt.Errorf("could not parse latitude from json payload")
+	if ok {
+		p.Lat = lat
 	}
 	lng, ok := jsonData[tracker.ComplexTopic.LngJsonKey].(float64)
-	if !ok {
-		return geo.Point{}, fmt.Errorf("could not parse longitude from json payload")
+	if ok {
+		p.Lng = lng
 	}
-	return geo.Point{
-		Lat: lat,
-		Lng: lng,
-	}, nil
+
+	if p.Lat == 0 && p.Lng == 0 {
+		return p, fmt.Errorf("could not parse lat or lon from complex topic message")
+	}
+	return p, nil
 }
 
 // watches the LocationUpdate channel for a tracker and queues a CheckGeofence operation
@@ -269,7 +264,7 @@ func processLocationUpdates(tracker *geo.Tracker) {
 // subscribe to topics when MQTT client connects (or reconnects)
 func onMqttConnect(client mqtt.Client) {
 	for _, tracker := range trackers {
-		logger.Infof("Subscribing to MQTT topics for tracker %d", tracker.ID)
+		logger.Infof("Subscribing to MQTT topics for tracker %v", tracker.ID)
 
 		// define which topics are relevant for each tracker based on config
 
@@ -303,7 +298,7 @@ func onMqttConnect(client mqtt.Client) {
 					logger.Debugf("Topic subscribed successfully: %s", topic)
 					break
 				} else {
-					logger.Infof("Failed to subscribe to topic %s for tracker %d, will make %d more attempts. Error: %v", topic, tracker.ID, retryAttempts, token.Error())
+					logger.Infof("Failed to subscribe to topic %s for tracker %v, will make %d more attempts. Error: %v", topic, tracker.ID, retryAttempts, token.Error())
 				}
 				time.Sleep(5 * time.Second)
 			}
