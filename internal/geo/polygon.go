@@ -37,8 +37,6 @@ type (
 	}
 )
 
-var polygonMqttTopics = []string{"latitude", "longitude"}
-
 func init() {
 	logger.SetFormatter(&util.CustomFormatter{})
 	logger.SetOutput(os.Stdout)
@@ -47,28 +45,24 @@ func init() {
 	}
 }
 
-func (p *PolygonGeofence) GetMqttTopics() []string {
-	return polygonMqttTopics
-}
-
 // get action based on whether we had a polygon geofence change event
 // uses ray-casting algorithm, assumes a simple geofence (no holes or border cross points)
-func (p *PolygonGeofence) getEventChangeAction(car *Car) (action string) {
-	if !car.CurrentLocation.IsPointDefined() {
+func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string) {
+	if !tracker.CurrentLocation.IsPointDefined() {
 		return // need valid lat and long to check geofence
 	}
 
-	isInsideCloseGeo := isInsidePolygonGeo(car.CurrentLocation, p.Close)
-	isInsideOpenGeo := isInsidePolygonGeo(car.CurrentLocation, p.Open)
+	isInsideCloseGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Close)
+	isInsideOpenGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Open)
 
-	if len(p.Close) > 0 && car.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
+	if len(p.Close) > 0 && tracker.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
 		action = ActionClose
-	} else if len(p.Open) > 0 && !car.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
+	} else if len(p.Open) > 0 && !tracker.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
 		action = ActionOpen
 	}
 
-	car.InsidePolyCloseGeo = isInsideCloseGeo
-	car.InsidePolyOpenGeo = isInsideOpenGeo
+	tracker.InsidePolyCloseGeo = isInsideCloseGeo
+	tracker.InsidePolyOpenGeo = isInsideOpenGeo
 
 	return
 }
@@ -93,14 +87,14 @@ func loadKMLFile(p *PolygonGeofence) error {
 	fileContent, err := os.ReadFile(p.KMLFile)
 	lowerKML := strings.ToLower(string(fileContent)) // convert xml to lower to make xml tag parsing case insensitive
 	if err != nil {
-		logger.Infof("Could not read file %s, received error: %e", p.KMLFile, err)
+		logger.Infof("Could not read file %s, received error: %v", p.KMLFile, err)
 		return err
 	}
 
 	var kml KML
 	err = xml.Unmarshal([]byte(lowerKML), &kml)
 	if err != nil {
-		logger.Infof("Could not load kml from file %s, received error: %e", p.KMLFile, err)
+		logger.Infof("Could not load kml from file %s, received error: %v", p.KMLFile, err)
 		return err
 	}
 
@@ -123,12 +117,12 @@ func loadKMLFile(p *PolygonGeofence) error {
 			coords := strings.Split(c, ",")
 			lat, err := strconv.ParseFloat(coords[1], 64)
 			if err != nil {
-				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %e", c, err)
+				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %v", c, err)
 				return err
 			}
 			lng, err := strconv.ParseFloat(coords[0], 64)
 			if err != nil {
-				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %e", c, err)
+				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %v", c, err)
 				return err
 			}
 

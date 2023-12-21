@@ -1,5 +1,7 @@
 # Tesla-GeoGDO
-A lightweight app that will operate your smart Garage Door Openers (GDOs) based on the location of your Tesla vehicles, automatically closing when you leave, and opening when you return. Supports multiple vehicles, geofence types, and smart GDO devices.
+**NOTE: As of v2.0.0, this app works with any location tracking that can publish to an MQTT broker (e.g. TeslaMate for Teslas, or the OwnTracks app for smartphones); it is no longer limited to tracking Teslas. See [Prerequisites](#prerequisite) for details.**
+
+A lightweight app that will operate your smart Garage Door Openers (GDOs) based on the position of your location tracker (e.g. Tesla vehicle or phone location), automatically closing when you leave, and opening when you return. Supports multiple vehicles, location trackers (see [Prerequisites](#prerequisite)), geofence types, and smart GDO devices.
 
 <!-- TOC -->
 
@@ -37,16 +39,15 @@ A lightweight app that will operate your smart Garage Door Openers (GDOs) based 
   * Meross GDO's that are managed by Home Assistant or Homebridge *are currently supported*
 
 ## Prerequisite
-This app uses the MQTT broker bundled with [TeslaMate](https://github.com/adriankumpf/teslamate). You must be running TeslaMate and have the MQTT broker exposed for consumption to use this app. TeslaMate has done a lot of work in scraping API data while minimizing vampire drain on vehicles from API requests, and TeslaMate has many other features that make it more than worthwhile to use in addition to this app.
+As of v2.0.0, this app supports any location tracker that can publish to an MQTT broker. For tesla vehicles, the easiest way to accomplish this is to use the [MQTT capabilities](https://docs.teslamate.org/docs/integrations/mqtt) of [TeslaMate](https://github.com/adriankumpf/teslamate). For other users, you can use an app like [OwnTracks](https://owntracks.org/) on your phone to publish your location to an MQTT broker for tracking.
 
-## How to use
+## How to Use
 ### Docker
 This app is provided as a docker image. You will need to create a `config.yml` file (please refer to the [examples directory](/examples) or the simplified [config.simple.example.yml](config.simple.example.yml)), edit it appropriately (***make sure to preserve the leading spaces, they are important***), and then mount it to the container at runtime. For example:
 
 ```bash
 # see docker compose example below for parameter explanations
 docker run \
-  --user 1000:1000 \
   -e TZ=America/New_York \
   -v /etc/tesla-geogdo:/app/config \
   brchri/tesla-geogdo:latest
@@ -60,7 +61,6 @@ services:
   tesla-geogdo:
     image: brchri/tesla-geogdo:latest
     container_name: tesla-geogdo
-    user: 1000:1000 # optional, sets user to run in container; must have read access to mounted config volume (+ write if using token caching)
     environment:
       - TZ=America/New_York # optional, sets timezone for container
     volumes:
@@ -73,8 +73,8 @@ The following Docker environment variables are supported but not required.
 | Variable Name | Type | Description |
 | ------------- | ---- | ----------- |
 | `CONFIG_FILE` | String (Filepath) | Path to config file within container |
-| `TESLAMATE_MQTT_USER` | String | User to authenticate to MQTT broker. Can be used instead of setting `teslamate.mqtt.user` in the `config.yml` file |
-| `TESLAMATE_MQTT_PASS` | String | Password to authenticate to MQTT broker. Can be used instead of setting `teslamate.mqtt.pass` in the `config.yml` file |
+| `TRACKER_MQTT_USER` | String | User to authenticate to MQTT broker. Can be used instead of setting `global.tracker_mqtt_settings.connection.user` in the `config.yml` file |
+| `TRACKER_MQTT_PASS` | String | Password to authenticate to MQTT broker. Can be used instead of setting `global.tracker_mqtt_settings.connection.pass` in the `config.yml` file |
 | `DEBUG` | Bool | Increases output verbosity |
 | `TESTING` | Bool | Will perform all functions *except* actually operating garage door, and will just output operation *would've* happened |
 | `TZ` | String | Sets timezone for container |
@@ -105,8 +105,10 @@ garage_doors:
           host: localhost
           port: 1883
         prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
+    trackers:
+      - id: 1
+        lat_topic: teslamate/cars/1/latitude
+        lng_topic: teslamate/cars/1/longitude
 ```
 This would produce two circular geofences (open and close) that look like this:
 
@@ -141,8 +143,9 @@ garage_doors:
           host: localhost
           port: 1883
         prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
+    trackers:
+      - id: 1
+        geofence_topic: teslamate/cars/1/geofence
 ```
 
 #### Polygon Geofence
@@ -192,8 +195,12 @@ garage_doors:
           host: localhost
           port: 1883
         prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
+    trackers:
+      - id: 1
+        complex_topic:
+          topic: owntracks/owner
+          lat_json_key: lat
+          lng_json_key: lon
 ```
 
 Or, using a tool referenced above or any other of your choosing, you can generate and download a KML file containing your polygon geofences instead of manually defining the points in your config file. Be sure that the KML file is in a mounted volume and accessible within the container. Within your KML file, you *must* define a `name` element within each `Placemark` element for each geofence, with the value `open` or `close` accordingly. Please see the [polygon_map.kml](resources/polygon_map.kml) file for an example.
@@ -213,8 +220,10 @@ garage_doors:
           host: localhost
           port: 1883
         prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
+    trackers:
+      - id: 1
+        lat_topic: teslamate/cars/1/latitude
+        lng_topic: teslamate/cars/1/longitude
 ```
 
 Either of these configs would produce two polygonal geofences (open and close) that look like this:
@@ -228,3 +237,5 @@ There's a configurable `cooldown` parameter in the `config.yml` file's `global` 
 
 ## Credits
 * [TeslaMate](https://github.com/adriankumpf/teslamate)
+* [Ratgdo](https://paulwieland.github.io/ratgdo/)
+* [@DjAnu](https://github.com/DjAnu) for the idea to expand beyond Tesla vehicles and help with testing
