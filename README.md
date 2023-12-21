@@ -145,10 +145,7 @@ garage_doors:
         prefix: home/garage/Main
     trackers:
       - id: 1
-        complex_topic:
-          topic: owntracks/owner
-          lat_json_key: lat
-          lng_json_key: lon
+        geofence_topic: teslamate/cars/1/geofence
 ```
 
 #### Polygon Geofence
@@ -200,8 +197,10 @@ garage_doors:
         prefix: home/garage/Main
     trackers:
       - id: 1
-        lat_topic: teslamate/cars/1/latitude
-        lng_topic: teslamate/cars/1/longitude
+        complex_topic:
+          topic: owntracks/owner
+          lat_json_key: lat
+          lng_json_key: lon
 ```
 
 Or, using a tool referenced above or any other of your choosing, you can generate and download a KML file containing your polygon geofences instead of manually defining the points in your config file. Be sure that the KML file is in a mounted volume and accessible within the container. Within your KML file, you *must* define a `name` element within each `Placemark` element for each geofence, with the value `open` or `close` accordingly. Please see the [polygon_map.kml](resources/polygon_map.kml) file for an example.
