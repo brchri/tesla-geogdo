@@ -1,5 +1,5 @@
 # Tesla-GeoGDO
-**NOTE: As of v2.0.0, this app works with any vehicle (using location tracking on your smartphone); it is no longer limited to tracking Teslas.**
+**NOTE: As of v2.0.0, this app works with any location tracking that can publish to an MQTT broker (e.g. TeslaMate for Teslas, or the OwnTracks app for smartphones); it is no longer limited to tracking Teslas. See [Prerequisites](#prerequisite) for details.**
 
 A lightweight app that will operate your smart Garage Door Openers (GDOs) based on the position of your location tracker (e.g. Tesla vehicle or phone location), automatically closing when you leave, and opening when you return. Supports multiple vehicles, location trackers (see [Prerequisites](#prerequisite)), geofence types, and smart GDO devices.
 
