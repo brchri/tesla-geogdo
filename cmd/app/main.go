@@ -271,6 +271,7 @@ func onMqttConnect(client mqtt.Client) {
 		possibleTopics := []string{
 			tracker.LatTopic,
 			tracker.LngTopic,
+			tracker.GeofenceTopic,
 			tracker.ComplexTopic.Topic,
 		}
 

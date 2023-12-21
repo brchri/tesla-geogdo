@@ -56,10 +56,4 @@ garage_doors:
             required_finish_state: closed
     trackers: # defines which trackers should be used to operate garage; list of trackers includes an arbitrary (but unique) id and topic definitions to retrieve latitude and longitude
       - id: 1 # required, some identifier, can be number or string
-        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
-        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
-      - id: 2 # required, some identifier, can be number or string
-        complex_topic: # if lat and lng are published to a single topic via json payload, use this instead of lat_topic and lng_topic
-          topic: some/complex/topic
-          lat_json_key: lat # json key for latitude; only top-level json keys are supported, cannot be nested within other json keys
-          lng_json_key: lng # json key for longitude; only top-level json keys are supported, cannot be nested within other json keys
+        geofence_topic: teslamate/cars/1/geofence
