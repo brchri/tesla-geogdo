@@ -2,7 +2,7 @@
 # To keep it clean, it won't explain any parameters; please refer to the examples in the `examples` folder for parameter explanations
 
 global:
-  teslamate_mqtt_settings:
+  tracker_mqtt_settings:
     connection: &mqtt_connection_settings
       host: localhost
       port: 1883

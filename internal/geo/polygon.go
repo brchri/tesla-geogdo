@@ -87,14 +87,14 @@ func loadKMLFile(p *PolygonGeofence) error {
 	fileContent, err := os.ReadFile(p.KMLFile)
 	lowerKML := strings.ToLower(string(fileContent)) // convert xml to lower to make xml tag parsing case insensitive
 	if err != nil {
-		logger.Infof("Could not read file %s, received error: %e", p.KMLFile, err)
+		logger.Infof("Could not read file %s, received error: %v", p.KMLFile, err)
 		return err
 	}
 
 	var kml KML
 	err = xml.Unmarshal([]byte(lowerKML), &kml)
 	if err != nil {
-		logger.Infof("Could not load kml from file %s, received error: %e", p.KMLFile, err)
+		logger.Infof("Could not load kml from file %s, received error: %v", p.KMLFile, err)
 		return err
 	}
 
@@ -117,12 +117,12 @@ func loadKMLFile(p *PolygonGeofence) error {
 			coords := strings.Split(c, ",")
 			lat, err := strconv.ParseFloat(coords[1], 64)
 			if err != nil {
-				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %e", c, err)
+				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %v", c, err)
 				return err
 			}
 			lng, err := strconv.ParseFloat(coords[0], 64)
 			if err != nil {
-				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %e", c, err)
+				logger.Infof("Could not parse lng/lat coordinates from line %s, received error: %v", c, err)
 				return err
 			}
 

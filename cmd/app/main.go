@@ -175,24 +175,24 @@ func main() {
 				var err error
 				switch message.Topic() {
 				case t.LatTopic:
-					logger.Debugf("Received lat for tracker %v: %v", t.ID, string(message.Payload()))
+					logger.Debugf("Received lat for tracker %v: %s", t.ID, string(message.Payload()))
 					point.Lat, err = strconv.ParseFloat(string(message.Payload()), 64)
 				case t.LngTopic:
-					logger.Debugf("Received long for tracker %v: %v", t.ID, string(message.Payload()))
+					logger.Debugf("Received long for tracker %v: %s", t.ID, string(message.Payload()))
 					point.Lng, err = strconv.ParseFloat(string(message.Payload()), 64)
 				case t.GeofenceTopic:
 					t.PrevGeofence = t.CurGeofence
 					t.CurGeofence = string(message.Payload())
-					logger.Infof("Received geo for tracker %v: %v", t.ID, t.CurGeofence)
+					logger.Infof("Received geo for tracker %v: %s", t.ID, t.CurGeofence)
 					go geo.CheckGeofence(t)
 					break topic
 				case t.ComplexTopic.Topic:
-					logger.Debugf("Received payload for complex toipc %s for tracker %v", message.Topic(), t.ID)
+					logger.Debugf("Received payload for complex toipc %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
 				}
 
 				if err != nil {
-					logger.Errorf("could not parse message payload from topic for tracker %v, received error %e\nmessage payload: %s", t.ID, err, message.Payload())
+					logger.Errorf("could not parse message payload from topic for tracker %v, received error %v", t.ID, err)
 					break topic
 				}
 
@@ -315,12 +315,12 @@ func onMqttConnect(client mqtt.Client) {
 func checkEnvVars() {
 	logger.Debug("Checking environment variables:")
 	// override config with env vars if present
-	if value, exists := os.LookupEnv("TESLAMATE_MQTT_USER"); exists {
-		logger.Debug("  TESLAMATE_MQTT_USER defined, overriding config")
+	if value, exists := os.LookupEnv("TRACKER_MQTT_USER"); exists {
+		logger.Debug("  TRACKER_MQTT_USER defined, overriding config")
 		mqttSettings.User = value
 	}
-	if value, exists := os.LookupEnv("TESLAMATE_MQTT_PASS"); exists {
-		logger.Debug("  TESLAMATE_MQTT_PASS defined, overriding config")
+	if value, exists := os.LookupEnv("TRACKER_MQTT_PASS"); exists {
+		logger.Debug("  TRACKER_MQTT_PASS defined, overriding config")
 		mqttSettings.Pass = value
 	}
 	if value, exists := os.LookupEnv("TESTING"); exists {

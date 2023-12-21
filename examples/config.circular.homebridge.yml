@@ -4,7 +4,7 @@
 # Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
 
 global:
-  mqtt_settings: # settings for tracker mqtt broker
+  tracker_mqtt_settings: # settings for tracker mqtt broker
     connection:
       host: localhost # dns, container name, or IP of tracker mqtt host
       port: 1883
@@ -44,10 +44,12 @@ garage_doors:
             values: # defines expected values for status and command characteristics
               open: 0 # defines value for characteristic to open door
               close: 1 # defines value for characteristic to close door
-    trackers: # defines which trackers should be used to operate garage
+    trackers: # defines which trackers should be used to operate garage; list of trackers includes an arbitrary (but unique) id and topic definitions to retrieve latitude and longitude
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
         lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
       - id: 2 # required, some identifier, can be number or string
-        lat_topic: teslamate/cars/2/latitude # topic to retrieve latitude for tracker
-        lng_topic: teslamate/cars/2/longitude # topic to retrieve longitude for tracker
+        complex_topic: # if lat and lng are published to a single topic via json payload, use this instead of lat_topic and lng_topic
+          topic: some/complex/topic
+          lat_json_key: lat # json key for latitude; only top-level json keys are supported, cannot be nested within other json keys
+          lng_json_key: lng # json key for longitude; only top-level json keys are supported, cannot be nested within other json keys
