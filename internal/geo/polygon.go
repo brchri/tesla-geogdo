@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	util "github.com/brchri/tesla-geogdo/internal/util"
 	logger "github.com/sirupsen/logrus"
@@ -55,10 +56,19 @@ func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string)
 	isInsideCloseGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Close)
 	isInsideOpenGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Open)
 
-	if len(p.Close) > 0 && tracker.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
-		action = ActionClose
-	} else if len(p.Open) > 0 && !tracker.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
-		action = ActionOpen
+	if len(p.Close) > 0 {
+		if tracker.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
+			action = ActionClose
+		} else if !tracker.InsidePolyCloseGeo && isInsideCloseGeo { // if we just entered the close geo, then set LastNoOpEvent to prevent flapping and accidentally triggering an open
+			tracker.LastEnteredCloseGeo = time.Now()
+		}
+	}
+	if len(p.Open) > 0 {
+		if !tracker.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
+			action = ActionOpen
+		} else if tracker.InsidePolyOpenGeo && !isInsideOpenGeo { // if we just left the open geo, then set LastNoOpEvent to prevent flapping and accidentally triggering an open
+			tracker.LastLeftOpenGeo = time.Now()
+		}
 	}
 
 	tracker.InsidePolyCloseGeo = isInsideCloseGeo

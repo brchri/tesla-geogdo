@@ -19,19 +19,21 @@ type (
 	}
 
 	Tracker struct {
-		ID                 interface{} `yaml:"id"` // mqtt identifier for vehicle
-		GarageDoor         *GarageDoor // bidirectional pointer to GarageDoor containing tracker
-		CurrentLocation    Point       // current vehicle location
-		LocationUpdate     chan Point  // channel to receive location updates
-		CurDistance        float64     // current distance from garagedoor location
-		PrevGeofence       string      // geofence previously ascribed to tracker
-		CurGeofence        string      // updated geofence ascribed to tracker when published to mqtt
-		InsidePolyOpenGeo  bool        // indicates if tracker is currently inside the polygon_open_geofence
-		InsidePolyCloseGeo bool        // indicates if tracker is currently inside the polygon_close_geofence
-		LatTopic           string      `yaml:"lat_topic"`
-		LngTopic           string      `yaml:"lng_topic"`
-		GeofenceTopic      string      `yaml:"geofence_topic"` // topic for publishing a geofence name where a tracker resides, e.g. teslamate geofence indicating 'home' or 'not_home'
-		ComplexTopic       struct {
+		ID                  interface{} `yaml:"id"` // mqtt identifier for vehicle
+		GarageDoor          *GarageDoor // bidirectional pointer to GarageDoor containing tracker
+		CurrentLocation     Point       // current vehicle location
+		LocationUpdate      chan Point  // channel to receive location updates
+		CurDistance         float64     // current distance from garagedoor location
+		PrevGeofence        string      // geofence previously ascribed to tracker
+		CurGeofence         string      // updated geofence ascribed to tracker when published to mqtt
+		InsidePolyOpenGeo   bool        // indicates if tracker is currently inside the polygon_open_geofence
+		InsidePolyCloseGeo  bool        // indicates if tracker is currently inside the polygon_close_geofence
+		LastEnteredCloseGeo time.Time   // timestamp of when tracker last entered the close geofence; used to prevent flapping
+		LastLeftOpenGeo     time.Time   // timestamp of when tracker last left the open geofence; used to prevent flapping
+		LatTopic            string      `yaml:"lat_topic"`
+		LngTopic            string      `yaml:"lng_topic"`
+		GeofenceTopic       string      `yaml:"geofence_topic"` // topic for publishing a geofence name where a tracker resides, e.g. teslamate geofence indicating 'home' or 'not_home'
+		ComplexTopic        struct {
 			Topic      string `yaml:"topic"`
 			LatJsonKey string `yaml:"lat_json_key"`
 			LngJsonKey string `yaml:"lng_json_key"`
@@ -97,6 +99,20 @@ func CheckGeofence(tracker *Tracker) {
 		logger.Debugf("Garage operation is locked (due to either cooldown or current activity), will not execute action '%s'", action)
 		return
 	}
+	// check if tracker geofence event is valid to prevent flapping
+	if !isClearedFromFlapping(action, tracker) {
+		var geofenceEvent string
+		var geofence string
+		if action == ActionOpen {
+			geofenceEvent = "left"
+			geofence = "open"
+		} else {
+			geofenceEvent = "entered"
+			geofence = "close"
+		}
+		logger.Debugf("Tracker just recently %s the %s geofence, indicating a possible flap; will not execute action %s", geofenceEvent, geofence, action)
+		return
+	}
 
 	tracker.GarageDoor.OpLock = true // set lock so no other threads try to operate the garage before the cooldown period is complete
 	// send operation to garage door and wait for timeout to release oplock
@@ -134,6 +150,29 @@ func CheckGeofence(tracker *Tracker) {
 		}
 		tracker.GarageDoor.OpLock = false // release garage door's operation lock
 	}()
+}
+
+// checks if a tracker just recently did the opposite geofence event from the supplied action, for example,
+// if a tracker just entered the 'open' geofence, check that it didn't just barely leave it within the last 10 secs
+//
+// because lat and lng are processed individually, it's possible to get a slightly incorrect position, which can
+// result in a tracker being incorrectly positioned just outside an open geofence when the lat is processed (as it's
+// paired with the old lng), but then positioned correctly back within the open geofence when the corresponding lng is processed,
+// which would incorrectly trigger an open event; by checking that we didn't just recently leave the open geofence we
+// can avoid this behavior by accounting for possible "teleporting" when doing a geofence event change
+//
+// geofences must implement setting the LastLeftOpenGeo and LastEnteredCloseGeo for this to be effective
+func isClearedFromFlapping(action string, tracker *Tracker) bool {
+	if os.Getenv("GDO_SKIP_FLAP_DELAY") == "true" {
+		return true
+	}
+	var compareTime time.Time
+	if action == ActionOpen {
+		compareTime = tracker.LastLeftOpenGeo
+	} else {
+		compareTime = tracker.LastEnteredCloseGeo
+	}
+	return time.Since(compareTime).Seconds() >= 10
 }
 
 func ParseGarageDoorConfig() {
