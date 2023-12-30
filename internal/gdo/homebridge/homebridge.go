@@ -120,7 +120,7 @@ func (h *homebridgeGdo) SetGarageDoor(action string) error {
 	logger.Debugf("Setting garage door target state: %s", action)
 	err := h.login()
 	if err != nil {
-		return fmt.Errorf("unable to login, received error %e", err)
+		return fmt.Errorf("unable to login, received error %v", err)
 	}
 
 	var desiredTargetState string
@@ -137,7 +137,7 @@ func (h *homebridgeGdo) SetGarageDoor(action string) error {
 	if h.Settings.Accessory.Characteristics.Status != "" {
 		state, err := h.getDoorStatus()
 		if err != nil {
-			return fmt.Errorf("unable to get door status, received error %e", err)
+			return fmt.Errorf("unable to get door status, received error %v", err)
 		}
 		if state != desiredStartState {
 			logger.Warnf("Action and state mismatch: garage state is not valid for executing requested action; current state %s; requested action: %s", state, action)
@@ -165,7 +165,7 @@ func (h *homebridgeGdo) SetGarageDoor(action string) error {
 	}
 	_, err = h.ExecuteApiCall(endpoint, "PUT", string(body), headers)
 	if err != nil {
-		return fmt.Errorf("received error when executing api call to homebridge server: %e", err)
+		return fmt.Errorf("received error when executing api call to homebridge server: %v", err)
 	}
 	if h.Settings.Accessory.Characteristics.Status == "" {
 		logger.Debug("request sent successfully, but no status characteristic defined, unable to determine if operation successful")
@@ -237,7 +237,7 @@ func (h *homebridgeGdo) login() error {
 	endpoint := "/api/auth/login"
 	body, err := json.Marshal(lb)
 	if err != nil {
-		return fmt.Errorf("unable to marshal json for username and password, received error: %e", err)
+		return fmt.Errorf("unable to marshal json for username and password, received error: %v", err)
 	}
 
 	headers := map[string]string{
@@ -246,7 +246,7 @@ func (h *homebridgeGdo) login() error {
 
 	rBody, err := h.ExecuteApiCall(endpoint, "POST", string(body), headers)
 	if err != nil {
-		return fmt.Errorf("received error when executing api call: %e", err)
+		return fmt.Errorf("received error when executing api call: %v", err)
 	}
 
 	type respBody struct {

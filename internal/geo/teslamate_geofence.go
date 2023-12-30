@@ -20,21 +20,15 @@ type (
 	}
 )
 
-var teslamateMqttTopics = []string{"geofence"}
-
-func (t *TeslamateGeofence) GetMqttTopics() []string {
-	return teslamateMqttTopics
-}
-
 // gets action based on if there was a relevant geofence event change
-func (t *TeslamateGeofence) getEventChangeAction(car *Car) (action string) {
+func (t *TeslamateGeofence) getEventChangeAction(tracker *Tracker) (action string) {
 	if t.Close.IsTriggerDefined() &&
-		car.PrevGeofence == t.Close.From &&
-		car.CurGeofence == t.Close.To {
+		tracker.PrevGeofence == t.Close.From &&
+		tracker.CurGeofence == t.Close.To {
 		action = ActionClose
 	} else if t.Open.IsTriggerDefined() &&
-		car.PrevGeofence == t.Open.From &&
-		car.CurGeofence == t.Open.To {
+		tracker.PrevGeofence == t.Open.From &&
+		tracker.CurGeofence == t.Open.To {
 		action = ActionOpen
 	}
 	return

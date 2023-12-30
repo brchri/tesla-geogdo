@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2023.12.21
+
+**NOTE: This is a breaking change for config files. Please be sure to reference the [examples](/examples) directory for the most up to date config file structure when updating to this version!!**
+
+### Added
+- support for any location tracker that can publish to an mqtt broker; this enables support for any vehicle if the user can publish location data via an app like TeslaMate or OwnTracks on a smartphone
+
+### Changed
+- config file changes to support the feature that adds support for any location tracker that can publish to an mqtt broker; see the [examples](/examples) folder for the most up to date examples of config file structure
+
+### Fixed
+- minor debug message formatting
+
 ## [1.0.0] - 2023.12.05
 
 ### Added

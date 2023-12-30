@@ -3,6 +3,7 @@ package geo
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,12 +16,6 @@ type (
 		OpenDistance  float64 `yaml:"open_distance"`  // defines a radius from the center point; when vehicle moves from > distance to < distance, garage will open
 	}
 )
-
-var circularMqttTopics = []string{"latitude", "longitude"}
-
-func (c *CircularGeofence) GetMqttTopics() []string {
-	return circularMqttTopics
-}
 
 func distance(point1 Point, point2 Point) float64 {
 	// Calculate the distance between two points using the haversine formula
@@ -40,24 +35,34 @@ func toRadians(degrees float64) float64 {
 }
 
 // gets action based on if there was a relevant distance change
-func (c *CircularGeofence) getEventChangeAction(car *Car) (action string) {
-	if !car.CurrentLocation.IsPointDefined() {
+func (c *CircularGeofence) getEventChangeAction(tracker *Tracker) (action string) {
+	if !tracker.CurrentLocation.IsPointDefined() {
 		return // need valid lat and lng to check fence
 	}
 
-	// update car's current distance, and store the previous distance in a variable
-	prevDistance := car.CurDistance
-	car.CurDistance = distance(car.CurrentLocation, c.Center)
+	// update tracker's current distance, and store the previous distance in a variable
+	prevDistance := tracker.CurDistance
+	tracker.CurDistance = distance(tracker.CurrentLocation, c.Center)
 
-	// check if car has crossed a geofence and set an appropriate action
-	if c.CloseDistance > 0 && // is valid close distance defined
-		prevDistance <= c.CloseDistance &&
-		car.CurDistance > c.CloseDistance { // car was within close geofence, but now beyond it (car left geofence)
-		action = ActionClose
-	} else if c.OpenDistance > 0 && // is valid open distance defined
-		prevDistance >= c.OpenDistance &&
-		car.CurDistance < c.OpenDistance { // car was outside of open geofence, but is now within it (car entered geofence)
-		action = ActionOpen
+	// check if tracker has crossed a geofence and set an appropriate action
+	if c.CloseDistance > 0 { // is valid close distance defined
+		if prevDistance <= c.CloseDistance &&
+			tracker.CurDistance > c.CloseDistance { // tracker was within close geofence, but now beyond it (tracker left geofence)
+			action = ActionClose
+		}
+		if prevDistance > c.CloseDistance &&
+			tracker.CurDistance <= c.CloseDistance { // tracker just entered close geofence
+			tracker.LastEnteredCloseGeo = time.Now()
+		}
+	}
+	if c.OpenDistance > 0 { // is valid open distance defined
+		if prevDistance >= c.OpenDistance &&
+			tracker.CurDistance < c.OpenDistance { // tracker was outside of open geofence, but is now within it (tracker entered geofence)
+			action = ActionOpen
+		} else if prevDistance < c.OpenDistance &&
+			tracker.CurDistance >= c.OpenDistance { // tracker just left open geofence
+			tracker.LastLeftOpenGeo = time.Now()
+		}
 	}
 	return
 }

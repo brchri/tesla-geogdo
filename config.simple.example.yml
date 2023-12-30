@@ -2,7 +2,7 @@
 # To keep it clean, it won't explain any parameters; please refer to the examples in the `examples` folder for parameter explanations
 
 global:
-  teslamate_mqtt_settings:
+  tracker_mqtt_settings:
     connection: &mqtt_connection_settings
       host: localhost
       port: 1883
@@ -21,5 +21,7 @@ garage_doors:
       mqtt_settings:
         connection: *mqtt_connection_settings
         prefix: home/garage/Main
-    cars:
-      - teslamate_car_id: 1
+    trackers:
+      - id: 1
+        lat_topic: teslamate/cars/1/latitude
+        lng_topic: teslamate/cars/1/longitude

@@ -14,7 +14,7 @@ type (
 		Global struct {
 			MqttSettings struct {
 				Connection MqttConnectSettings `yaml:"connection"`
-			} `yaml:"teslamate_mqtt_settings"`
+			} `yaml:"tracker_mqtt_settings"`
 			OpCooldown int `yaml:"cooldown"`
 		} `yaml:"global"`
 		GarageDoors  []*map[string]interface{} `yaml:"garage_doors"` // this will be parsed properly later by the geo package

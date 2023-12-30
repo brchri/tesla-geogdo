@@ -4,9 +4,9 @@
 # Spacing is very important in this file, particularly the leading spacing (indentations). Failure to properly indent may cause config parsing to fail silently
 
 global:
-  teslamate_mqtt_settings: # settings for teslamate's mqtt broker
+  tracker_mqtt_settings: # settings for tracker mqtt broker
     connection:
-      host: localhost # dns, container name, or IP of teslamate's mqtt host
+      host: localhost # dns, container name, or IP of tracker mqtt host
       port: 1883
       client_id: tesla-geogdo # optional, arbitrary client name for MQTT connection; must not be the same as any other MQTT client name, will use random uuid if omitted
       user: mqtt_user # optional, only define if your mqtt broker requires authentication, can also be passed as env var MQTT_USER
@@ -51,7 +51,7 @@ garage_doors:
             lng: -123.79950958978756
           - lat: 46.192958467582514
             lng: -123.7998033090239
-    opener:
+    opener:  # defines how to control the garage
       type: http # type of garage door opener to use
       settings:
         connection:
@@ -64,7 +64,7 @@ garage_doors:
         status:
             endpoint: /status # optional, GET endpoint to retrieve current door status; expects simple return values like `open` or `closed`
             headers: # optional, list of headers, each must be surrounded by single quotes
-              - 'Authorization: Bearer long_api_key' # example header
+              - 'Authorization: Bearer lng_api_key' # example header
               - 'Content-Type: application/json' # example header
         commands:
           # /command endpoint with a body to indicate the command type
@@ -76,7 +76,7 @@ garage_doors:
             required_finish_state: open # optional; if status endpoint is available, require this stop state to confirm successful command execution
             timeout: 25 # optional, seconds to wait for garage door operation to complete if watching the status (default 30)
             headers: # optional, list of headers, each must be surrounded by single quotes
-              - 'Authorization: Bearer long_api_key' # example header
+              - 'Authorization: Bearer lng_api_key' # example header
               - 'Content-Type: application/json' # example header
           # /close endpoint with no body required, as the endpoint /close defines the type
           - name: close
@@ -87,7 +87,13 @@ garage_doors:
             required_finish_state: closed
             timeout: 25
             headers: # optional, list of headers, each must be surrounded by single quotes
-              - 'Authorization: Bearer long_api_key' # example header
+              - 'Authorization: Bearer lng_api_key' # example header
               - 'Content-Type: application/json' # example header
-    cars:
-      - teslamate_car_id: 1 # id used for the first vehicle in TeslaMate's MQTT broker
+    trackers: # defines which trackers should be used to operate garage; list of trackers includes an arbitrary (but unique) id and topic definitions to retrieve latitude and longitude
+      - id: 1 # required, some identifier, can be number or string
+        lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker
+        lng_topic: teslamate/cars/1/longitude # topic to retrieve longitude for tracker
+        complex_topic: # if lat and lng are published to a single topic via json payload, use this instead of lat_topic and lng_topic
+          topic: some/complex/topic
+          lat_json_key: lat # json key for latitude; only top-level json keys are supported, cannot be nested within other json keys
+          lng_json_key: lng # json key for longitude; only top-level json keys are supported, cannot be nested within other json keys
