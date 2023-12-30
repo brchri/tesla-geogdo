@@ -98,6 +98,7 @@ func parseArgs() {
 
 func main() {
 
+	// initialize api handlers
 	pauseChan = make(chan int)
 	http.HandleFunc("/pause", apiPauseHandler)
 	http.HandleFunc("/resume", apiPauseHandler)
@@ -197,6 +198,8 @@ func main() {
 				case t.ComplexTopic.Topic:
 					logger.Debugf("Received payload for complex toipc %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
+				default:
+					continue topic // no topic match for this tracker found, move on to next tracker
 				}
 
 				if err != nil {
@@ -337,6 +340,9 @@ func checkEnvVars() {
 	}
 }
 
+// receives api requests related to pause and resume functions
+// expects GET requests at either the /pause or /resume endpoints
+// and sends to relevant helper functions for processing
 func apiPauseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -362,6 +368,14 @@ func apiPauseHandler(w http.ResponseWriter, r *http.Request) {
 	pauseOperations(durationInt)
 }
 
+// pauses garage operations either indefinitely or for a finite duration
+// all other processing still functions (e.g. tracking, geofence awareness, etc),
+// only garage operations are disabled
+//
+// if a finite duration is provided, a goroutine will be initiated to wait for the duration
+// to timeout and re-enable garage operations. this goroutine also monitors a go channel
+// in case the pause duration is to be overriden, either by a new duration (finite or infinite),
+// or by a resume command, and behaves accordingly
 func pauseOperations(duration int) {
 	if duration == 0 {
 		duration = -1 // if no duration was defined, set to -1 for infinite pause
@@ -401,6 +415,11 @@ func pauseOperations(duration int) {
 	}
 }
 
+// helper function to resume garage operations
+// if there is currently a finite pause in progress, it will send
+// the new finite duration to the channel to be consumed by the currently
+// runnin goroutine with the updated value; else it will set the lock back to 0,
+// which is the disabled value (thereby resuming garage operations)
 func resumeOperations() {
 	logger.Info("Received request to resume operations")
 	if util.Config.MasterOpLock > 0 {
