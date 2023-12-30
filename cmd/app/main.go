@@ -101,7 +101,7 @@ func main() {
 	pauseChan = make(chan int)
 	http.HandleFunc("/pause", apiPauseHandler)
 	http.HandleFunc("/resume", apiPauseHandler)
-	http.ListenAndServe(":8555", nil)
+	go http.ListenAndServe(":8555", nil)
 
 	messageChan = make(chan mqtt.Message)
 
@@ -363,38 +363,51 @@ func apiPauseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pauseOperations(duration int) {
-	logger.Infof("Received request to pause operations, pausing for %d seconds", duration)
-	if util.Config.MasterOpLock {
+	if duration == 0 {
+		duration = -1 // if no duration was defined, set to -1 for infinite pause
+	}
+	if duration > 0 {
+		logger.Infof("Received request to pause operations, pausing for %d seconds, use /resume endpoint to resume garage operations sooner than indicated time", duration)
+	} else {
+		logger.Info("Received request to pause operations indefinitely; use /resume endpoint to resume garage operations")
+	}
+
+	if util.Config.MasterOpLock > 0 { // if we have a finite lock in progress, send new duration to channel
 		pauseChan <- duration
 		return
 	}
-	util.Config.MasterOpLock = true
-	if duration > 0 {
+	util.Config.MasterOpLock = duration
+
+	// only set a timeout loop if duration > 0, negatives are infinite pauses
+	if util.Config.MasterOpLock > 0 {
 		go func() {
-			for ; duration > 0; duration-- {
+			for ; util.Config.MasterOpLock > 0; util.Config.MasterOpLock-- {
 				time.Sleep(1 * time.Second)
 
 				// non-blocking select to check for channel message indicating a resume api call has been made and we can break the loop
 				select {
 				case msg := <-pauseChan:
-					if msg > 0 {
-						duration = msg
-					} else {
+					util.Config.MasterOpLock = msg
+					if msg <= 0 {
+						// either received an indefinite pause (<0) or a resume (=0), so loop with unlock final action is no longer needed
 						return
 					}
 				default:
 				}
 			}
 			logger.Debug("Pause duration reached; unpausing operation")
-			util.Config.MasterOpLock = false
+			util.Config.MasterOpLock = 0
 		}()
 	}
 }
 
 func resumeOperations() {
 	logger.Info("Received request to resume operations")
-	if util.Config.MasterOpLock {
-		pauseChan <- 0 // send signal to pause timeout loop it's no longer needed
-		util.Config.MasterOpLock = false
+	if util.Config.MasterOpLock > 0 {
+		// send signal to pause timeout loop it's no longer needed
+		// send as goroutine as we only read channel every 1 second, so this ensures fast api response while waiting for channel to be read by loop
+		go func() { pauseChan <- 0 }()
+	} else if util.Config.MasterOpLock < 0 {
+		util.Config.MasterOpLock = 0 // override indefinite pause
 	}
 }

@@ -19,7 +19,7 @@ type (
 		} `yaml:"global"`
 		GarageDoors  []*map[string]interface{} `yaml:"garage_doors"` // this will be parsed properly later by the geo package
 		Testing      bool
-		MasterOpLock bool
+		MasterOpLock int // user-initiated lock (pause), values: 0 = disabled, <0 = indefinite pause, >0 = num seconds left on finite timeout
 	}
 
 	MqttConnectSettings struct {

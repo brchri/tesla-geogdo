@@ -95,8 +95,8 @@ func CheckGeofence(tracker *Tracker) {
 	if action == "" {
 		return // nothing to do
 	}
-	if util.Config.MasterOpLock {
-		logger.Warnf("Garage operations are currently paused due to user request, will not execute action '%s'", action)
+	if util.Config.MasterOpLock != 0 {
+		logger.Warnf("Garage operations are currently paused due to user request, will not execute action '%s'. Use /resume api endpoint to resume garage operations", action)
 		return
 	}
 	if tracker.GarageDoor.OpLock {
