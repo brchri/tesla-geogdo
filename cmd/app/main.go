@@ -267,17 +267,13 @@ func onMqttConnect(client mqtt.Client) {
 		logger.Infof("Subscribing to MQTT topics for tracker %v", tracker.ID)
 
 		// define which topics are relevant for each tracker based on config
-
-		possibleTopics := []string{
+		topics := []string{}
+		for _, t := range []string{
 			tracker.LatTopic,
 			tracker.LngTopic,
 			tracker.GeofenceTopic,
 			tracker.ComplexTopic.Topic,
-		}
-
-		// need to remove any undefined topics
-		topics := []string{}
-		for _, t := range possibleTopics {
+		} {
 			if t != "" {
 				topics = append(topics, t)
 			}

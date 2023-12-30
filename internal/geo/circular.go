@@ -3,6 +3,7 @@ package geo
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -44,14 +45,24 @@ func (c *CircularGeofence) getEventChangeAction(tracker *Tracker) (action string
 	tracker.CurDistance = distance(tracker.CurrentLocation, c.Center)
 
 	// check if tracker has crossed a geofence and set an appropriate action
-	if c.CloseDistance > 0 && // is valid close distance defined
-		prevDistance <= c.CloseDistance &&
-		tracker.CurDistance > c.CloseDistance { // tracker was within close geofence, but now beyond it (tracker left geofence)
-		action = ActionClose
-	} else if c.OpenDistance > 0 && // is valid open distance defined
-		prevDistance >= c.OpenDistance &&
-		tracker.CurDistance < c.OpenDistance { // tracker was outside of open geofence, but is now within it (tracker entered geofence)
-		action = ActionOpen
+	if c.CloseDistance > 0 { // is valid close distance defined
+		if prevDistance <= c.CloseDistance &&
+			tracker.CurDistance > c.CloseDistance { // tracker was within close geofence, but now beyond it (tracker left geofence)
+			action = ActionClose
+		}
+		if prevDistance > c.CloseDistance &&
+			tracker.CurDistance <= c.CloseDistance { // tracker just entered close geofence
+			tracker.LastEnteredCloseGeo = time.Now()
+		}
+	}
+	if c.OpenDistance > 0 { // is valid open distance defined
+		if prevDistance >= c.OpenDistance &&
+			tracker.CurDistance < c.OpenDistance { // tracker was outside of open geofence, but is now within it (tracker entered geofence)
+			action = ActionOpen
+		} else if prevDistance < c.OpenDistance &&
+			tracker.CurDistance >= c.OpenDistance { // tracker just left open geofence
+			tracker.LastLeftOpenGeo = time.Now()
+		}
 	}
 	return
 }
