@@ -7,15 +7,16 @@ A lightweight app that will operate your smart Garage Door Openers (GDOs) based 
 
 - [Tesla-GeoGDO](#tesla-geogdo)
   - [Supported Smart Garage Door Openers](#supported-smart-garage-door-openers)
+    - [Current](#current)
+    - [Deprecated:](#deprecated)
+    - [Potentially Upcoming](#potentially-upcoming)
   - [Prerequisite](#prerequisite)
-  - [How to use](#how-to-use)
+  - [How to Use](#how-to-use)
     - [Docker](#docker)
     - [Supported Environment Variables](#supported-environment-variables)
+    - [API](#api)
   - [Notes](#notes)
     - [Geofence Types](#geofence-types)
-      - [Circular Geofence](#circular-geofence)
-      - [TeslaMate Defined Geofence](#teslamate-defined-geofence)
-      - [Polygon Geofence](#polygon-geofence)
     - [Operation Cooldown](#operation-cooldown)
   - [Credits](#credits)
 
@@ -50,6 +51,7 @@ This app is provided as a docker image. You will need to create a `config.yml` f
 docker run \
   -e TZ=America/New_York \
   -v /etc/tesla-geogdo:/app/config \
+  -p 8555:8555 \
   brchri/tesla-geogdo:latest
 ```
 
@@ -63,6 +65,8 @@ services:
     container_name: tesla-geogdo
     environment:
       - TZ=America/New_York # optional, sets timezone for container
+    ports:
+      - 8555:8555 # optional, only needed to use api
     volumes:
       - /etc/tesla-geogdo:/app/config # required, mounts folder containing config file(s) into container
     restart: unless-stopped
@@ -78,6 +82,20 @@ The following Docker environment variables are supported but not required.
 | `DEBUG` | Bool | Increases output verbosity |
 | `TESTING` | Bool | Will perform all functions *except* actually operating garage door, and will just output operation *would've* happened |
 | `TZ` | String | Sets timezone for container |
+
+### API
+There is a very simple API available that will allow you limited control of Tesla-GeoGDO remotely. To use it, you must expose a port mapping to port 8555 in the container (see the docker run and docker compose examples above). There are currently two endpoints available:
+
+* `GET /pause`
+  * Pauses garage operations. Takes an optional `duration` parameter to define how long garage operations should be paused, in seconds
+  * Can override previous pause command (e.g. increase the remaining time of a pause command currently in effect)
+  * Examples:
+    * `curl http://geogdo-ip:8555/pause?duration=10` (pauses garage operations for 10 seconds)
+    * `curl http://geogdo-ip:8555/pause` (pauses garage operations indefinitely)
+* `GET /resume`
+  * Resumes garage operations if they are currently paused; otherwise has no effect
+  * Example:
+    * `curl http://geogdo-ip:8555/resume`
 
 ## Notes
 ### Geofence Types

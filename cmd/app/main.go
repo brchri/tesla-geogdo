@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -31,6 +32,7 @@ var (
 	commitHash   string
 	messageChan  chan mqtt.Message         // channel to receive mqtt messages
 	mqttSettings *util.MqttConnectSettings // point to util.Config.Global.MqttSettings.Connection for shorter reference
+	pauseChan    chan int                  // handles sending message to goroutine that pauses operations based on api calls
 )
 
 func init() {
@@ -95,6 +97,13 @@ func parseArgs() {
 }
 
 func main() {
+
+	// initialize api handlers
+	pauseChan = make(chan int)
+	http.HandleFunc("/pause", apiPauseHandler)
+	http.HandleFunc("/resume", apiPauseHandler)
+	go http.ListenAndServe(":8555", nil)
+
 	messageChan = make(chan mqtt.Message)
 
 	logger.Debug("Setting MQTT Opts:")
@@ -189,6 +198,8 @@ func main() {
 				case t.ComplexTopic.Topic:
 					logger.Debugf("Received payload for complex toipc %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
+				default:
+					continue topic // no topic match for this tracker found, move on to next tracker
 				}
 
 				if err != nil {
@@ -326,5 +337,96 @@ func checkEnvVars() {
 	}
 	if value, exists := os.LookupEnv("DEBUG"); exists {
 		logger.Debugf("  DEBUG=%s", value)
+	}
+}
+
+// receives api requests related to pause and resume functions
+// expects GET requests at either the /pause or /resume endpoints
+// and sends to relevant helper functions for processing
+func apiPauseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.URL.Path == "/resume" {
+		resumeOperations()
+		return
+	}
+
+	query := r.URL.Query()
+	duration := query.Get("duration")
+	var durationInt int
+	if duration != "" && duration != "0" {
+		var err error
+		durationInt, err = strconv.Atoi(duration)
+		if err != nil {
+			http.Error(w, "Invalid duration parameter", http.StatusBadRequest)
+			return
+		}
+	}
+	pauseOperations(durationInt)
+}
+
+// pauses garage operations either indefinitely or for a finite duration
+// all other processing still functions (e.g. tracking, geofence awareness, etc),
+// only garage operations are disabled
+//
+// if a finite duration is provided, a goroutine will be initiated to wait for the duration
+// to timeout and re-enable garage operations. this goroutine also monitors a go channel
+// in case the pause duration is to be overriden, either by a new duration (finite or infinite),
+// or by a resume command, and behaves accordingly
+func pauseOperations(duration int) {
+	if duration == 0 {
+		duration = -1 // if no duration was defined, set to -1 for infinite pause
+	}
+	if duration > 0 {
+		logger.Infof("Received request to pause operations, pausing for %d seconds, use /resume endpoint to resume garage operations sooner than indicated time", duration)
+	} else {
+		logger.Info("Received request to pause operations indefinitely; use /resume endpoint to resume garage operations")
+	}
+
+	if util.Config.MasterOpLock > 0 { // if we have a finite lock in progress, send new duration to channel
+		pauseChan <- duration
+		return
+	}
+	util.Config.MasterOpLock = duration
+
+	// only set a timeout loop if duration > 0, negatives are infinite pauses
+	if util.Config.MasterOpLock > 0 {
+		go func() {
+			for ; util.Config.MasterOpLock > 0; util.Config.MasterOpLock-- {
+				time.Sleep(1 * time.Second)
+
+				// non-blocking select to check for channel message indicating a resume api call has been made and we can break the loop
+				select {
+				case msg := <-pauseChan:
+					util.Config.MasterOpLock = msg
+					if msg <= 0 {
+						// either received an indefinite pause (<0) or a resume (=0), so loop with unlock final action is no longer needed
+						return
+					}
+				default:
+				}
+			}
+			logger.Info("Pause timeout reached; unpausing operations")
+			util.Config.MasterOpLock = 0
+		}()
+	}
+}
+
+// helper function to resume garage operations
+// if there is currently a finite pause in progress, it will send
+// the new finite duration to the channel to be consumed by the currently
+// runnin goroutine with the updated value; else it will set the lock back to 0,
+// which is the disabled value (thereby resuming garage operations)
+func resumeOperations() {
+	logger.Info("Received request to resume operations, resuming...")
+	if util.Config.MasterOpLock > 0 {
+		// send signal to pause timeout loop it's no longer needed
+		// send as goroutine as we only read channel every 1 second, so this ensures fast api response while waiting for channel to be read by loop
+		go func() { pauseChan <- 0 }()
+	} else if util.Config.MasterOpLock < 0 {
+		util.Config.MasterOpLock = 0 // override indefinite pause
 	}
 }
