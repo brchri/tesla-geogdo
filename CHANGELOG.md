@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2024.01.01
+
+### Added
+- simple http api endpoints `/pause` and `/resume` on port `8555` to pause and resume garage door operations; see [README.md](/README.md) for details
+
+### Changed
+
+### Fixed
+- potential geofence flapping issues, causing doors to operate incorrectly when just entering a close geofence or just leaving an open geofence
+
 ## [2.0.0] - 2023.12.21
 
 **NOTE: This is a breaking change for config files. Please be sure to reference the [examples](/examples) directory for the most up to date config file structure when updating to this version!!**
