@@ -409,7 +409,7 @@ func pauseOperations(duration int) {
 				default:
 				}
 			}
-			logger.Debug("Pause duration reached; unpausing operation")
+			logger.Info("Pause timeout reached; unpausing operations")
 			util.Config.MasterOpLock = 0
 		}()
 	}
@@ -421,7 +421,7 @@ func pauseOperations(duration int) {
 // runnin goroutine with the updated value; else it will set the lock back to 0,
 // which is the disabled value (thereby resuming garage operations)
 func resumeOperations() {
-	logger.Info("Received request to resume operations")
+	logger.Info("Received request to resume operations, resuming...")
 	if util.Config.MasterOpLock > 0 {
 		// send signal to pause timeout loop it's no longer needed
 		// send as goroutine as we only read channel every 1 second, so this ensures fast api response while waiting for channel to be read by loop
