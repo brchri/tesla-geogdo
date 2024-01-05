@@ -160,7 +160,7 @@ garage_doors:
         connection:
           host: localhost
           port: 1883
-        prefix: home/garage/Main
+        topic_prefix: home/garage/Main
     trackers:
       - id: 1
         geofence_topic: teslamate/cars/1/geofence
@@ -212,7 +212,7 @@ garage_doors:
         connection:
           host: localhost
           port: 1883
-        prefix: home/garage/Main
+        topic_prefix: home/garage/Main
     trackers:
       - id: 1
         complex_topic:
