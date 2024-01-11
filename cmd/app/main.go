@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/brchri/tesla-geogdo/cmd/app/console"
 	"github.com/brchri/tesla-geogdo/internal/geo"
 	"github.com/google/uuid"
 	logger "github.com/sirupsen/logrus"
@@ -97,6 +98,8 @@ func parseArgs() {
 }
 
 func main() {
+	console.RunWizard()
+	return
 
 	// initialize api handlers
 	pauseChan = make(chan int)
