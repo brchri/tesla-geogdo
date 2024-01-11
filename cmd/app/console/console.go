@@ -2,6 +2,7 @@ package console
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"regexp"
@@ -19,6 +20,10 @@ type question struct {
 }
 
 var reader = bufio.NewReader(os.Stdin)
+var yesNoRegexString = "^(y|Y|n|N)$"
+var isYesRegex = regexp.MustCompile("y|Y")
+var isNoRegex = regexp.MustCompile("n|N")
+var yesNoInvalidResponse = "Please respond with y or n"
 
 func RunWizard() {
 	config := map[string]interface{}{}
@@ -37,8 +42,11 @@ func RunWizard() {
 	// config["global"] = runGlobalPrompts()
 	config["garage_doors"] = runGarageDoorsPrompts()
 
-	yamlData, _ := yaml.Marshal(config)
-	yamlString := string(yamlData)
+	var b bytes.Buffer
+	yamlEncoder := yaml.NewEncoder(&b)
+	yamlEncoder.SetIndent(2)
+	yamlEncoder.Encode(config)
+	yamlString := b.String()
 	fmt.Print("\n\n" + yamlString)
 }
 
@@ -113,9 +121,7 @@ func runGlobalPrompts() interface{} {
 	}
 
 	tracker_mqtt_settings := map[string]interface{}{
-		"tracker_mqtt_settings": map[string]interface{}{
-			"connection": tracker_connection,
-		},
+		"connection": tracker_connection,
 	}
 
 	global_config := map[string]interface{}{
@@ -137,38 +143,63 @@ func runGlobalPrompts() interface{} {
 }
 
 func runGarageDoorsPrompts() []interface{} {
+	fmt.Println("We will now configure one or more garage doors, which will include geofences, openers, and trackers")
 	garage_doors := []interface{}{}
-	garage_door := map[string]interface{}{}
-	var response string
-	response = promptUser(
-		question{
-			prompt:                 "What type of geofence would you like to configure for this garage door (more doors can be added later)?  [c|t|p]\nc: circular\nt: teslamate\np: polygon",
-			validResponseRegex:     "^(c|t|p|C|T|P)$",
-			invalidResponseMessage: "Please enter c (for circular), t (for teslamate), or p (for polygon)",
-		},
-	)
-	switch response {
-	case "c":
-		garage_door["geofence"] = runCircularGeofencePrompts()
-	case "t":
-		garage_door["geofence"] = runTeslamateGeofencePrompts()
-	case "p":
-		garage_door["geofence"] = runPolygonGeofencePrompts()
+	re := regexp.MustCompile("n|N")
+
+	for {
+		garage_door := map[string]interface{}{}
+		var response string
+		// response = promptUser(
+		// 	question{
+		// 		prompt:                 "What type of geofence would you like to configure for this garage door (more doors can be added later)?  [c|t|p]\nc: circular\nt: teslamate\np: polygon",
+		// 		validResponseRegex:     "^(c|t|p|C|T|P)$",
+		// 		invalidResponseMessage: "Please enter c (for circular), t (for teslamate), or p (for polygon)",
+		// 	},
+		// )
+		// switch response {
+		// case "c":
+		// 	garage_door["geofence"] = runCircularGeofencePrompts()
+		// case "t":
+		// 	garage_door["geofence"] = runTeslamateGeofencePrompts()
+		// case "p":
+		// 	garage_door["geofence"] = runPolygonGeofencePrompts()
+		// }
+
+		response = promptUser(question{
+			prompt:                 "What type of garage door opener would you like to configure for this garage door? [ha|hb|r|h|m]\nha: Home Assistant\nhb: Homebridge\nr: ratgdo (MQTT firmware only; for ESP Home, control via Home Assistant or Homebridge\nh: Generic HTTP\nm: Generic MQTT",
+			validResponseRegex:     "^(ha|hb|r|h|m)$",
+			invalidResponseMessage: "Please enter ha (for Home Assistant), hb (for Homebridge), r (for ratgdo), h (for generic HTTP), or m (for generic MQTT)",
+		})
+
+		switch response {
+		case "ha":
+			garage_door["opener"] = runHomeAssistantOpenerPrompts()
+		case "hb":
+			garage_door["opener"] = runHomebridgeOpenerPrompts()
+		case "r":
+			garage_door["opener"] = runRatgdoOpenerPrompts()
+		case "h":
+			garage_door["opener"] = runHttpOpenerPrompts()
+		case "m":
+			garage_door["opener"] = runMqttOpenerPrompts()
+		}
+
+		garage_door["trackers"] = runTrackerPrompts()
+
+		garage_doors = append(garage_doors, garage_door)
+
+		response = promptUser(question{
+			prompt:                 "Would you like to configure another garage door? [y|n]",
+			validResponseRegex:     "^(y|Y|n|N)$",
+			invalidResponseMessage: "Please respond with y or n",
+		})
+		if re.MatchString(response) {
+			break
+		}
 	}
 
-	response = promptUser(question{
-		prompt:                 "What type of garage door opener would you like to configure for this garage door? [ha|hb|r|h|m]\nha: Home Assistant\nhb: Homebridge\nr: ratgdo\nh: Generic HTTP\nm: Generic MQTT",
-		validResponseRegex:     "^(ha|hb|r|h|m)$",
-		invalidResponseMessage: "Please enter ha (for Home Assistant), hb (for Homebridge), r (for ratgdo), h (for generic HTTP), or m (for generic MQTT)",
-	})
-
-	switch response {
-	case "ha":
-		garage_door["opener"] = runHomeAssistantOpenerPrompts()
-	}
-
-	garage_doors = append(garage_doors, garage_door)
-
+	fmt.Println("Configuring garage doors is complete!")
 	return garage_doors
 }
 
