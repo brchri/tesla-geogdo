@@ -38,10 +38,16 @@ func RunWizard() {
 		os.Exit(0)
 	}()
 
+	type Config struct {
+		Global      interface{}   `yaml:"global"`
+		GarageDoors []interface{} `yaml:"garage_doors"`
+	}
+
 	asciiArt.NewFigure("Tesla-GeoGDO", "", false).Print()
 	asciiArt.NewFigure("Config Wizard", "", false).Print()
 
-	config := map[string]interface{}{}
+	// config := map[string]interface{}{}
+	config := Config{}
 	response := promptUser(
 		question{
 			prompt:                 "\n\nWould you like to use the wizard to generate your config file? [Y|n]",
@@ -54,8 +60,8 @@ func RunWizard() {
 		return
 	}
 
-	config["global"] = runGlobalPrompts()
-	config["garage_doors"] = runGarageDoorsPrompts()
+	config.Global = runGlobalPrompts()
+	config.GarageDoors = runGarageDoorsPrompts()
 
 	var b bytes.Buffer
 	yamlEncoder := yaml.NewEncoder(&b)
