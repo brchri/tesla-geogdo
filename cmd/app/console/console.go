@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	asciiArt "github.com/common-nighthawk/go-figure"
 	"gopkg.in/yaml.v3"
@@ -28,7 +30,16 @@ var isNoRegex = regexp.MustCompile("n|N")
 var yesNoInvalidResponse = "Please respond with y or n"
 
 func RunWizard() {
-	asciiArt.NewFigure("Tesla-GeoGDO Config Wizard", "", false).Print()
+	shutdownSignal := make(chan os.Signal, 1)
+	// handle interrupts
+	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-shutdownSignal
+		os.Exit(0)
+	}()
+
+	asciiArt.NewFigure("Tesla-GeoGDO", "", false).Print()
+	asciiArt.NewFigure("Config Wizard", "", false).Print()
 
 	config := map[string]interface{}{}
 	response := promptUser(
@@ -75,6 +86,9 @@ func RunWizard() {
 	err := os.WriteFile(filePath, b.Bytes(), 0644)
 	if err != nil {
 		fmt.Printf("ERROR: Unable to write file to %s", filePath)
+		os.Exit(1)
+	} else {
+		fmt.Println("\nSave complete!")
 	}
 }
 
