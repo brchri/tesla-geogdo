@@ -108,7 +108,7 @@ func runGlobalPrompts() interface{} {
 				User          string `yaml:"user"`
 				Pass          string `yaml:"pass"`
 				UseTls        bool   `yaml:"use_tls,omitempty"`
-				SkipTlsVerify bool   `yaml:"skip_tls_verify"`
+				SkipTlsVerify bool   `yaml:"skip_tls_verify,omitempty"`
 			} `yaml:"connection"`
 		} `yaml:"tracker_mqtt_settings"`
 		Cooldown int `yaml:"cooldown,omitempty"`
