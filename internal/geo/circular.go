@@ -12,8 +12,8 @@ type (
 	// defines a center point and two radii (distances) to define open and close geofences
 	CircularGeofence struct {
 		Center        Point   `yaml:"center"`
-		CloseDistance float64 `yaml:"close_distance"` // defines a radius from the center point; when vehicle moves from < distance to > distance, garage will close
-		OpenDistance  float64 `yaml:"open_distance"`  // defines a radius from the center point; when vehicle moves from > distance to < distance, garage will open
+		CloseDistance float64 `yaml:"close_distance,omitempty"` // defines a radius from the center point; when vehicle moves from < distance to > distance, garage will close
+		OpenDistance  float64 `yaml:"open_distance,omitempty"`  // defines a radius from the center point; when vehicle moves from > distance to < distance, garage will open
 	}
 )
 

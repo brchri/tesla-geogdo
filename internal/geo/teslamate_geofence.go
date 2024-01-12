@@ -9,14 +9,14 @@ import (
 type (
 	// defines triggers for open and close action for teslamate geofences
 	TeslamateGeofence struct {
-		Close TeslamateGeofenceTrigger `yaml:"close_trigger"` // garage will close when vehicle moves from `from` to `to`
-		Open  TeslamateGeofenceTrigger `yaml:"open_trigger"`  // garage will open when vehicle moves from `from` to `to`
+		Close TeslamateGeofenceTrigger `yaml:"close_trigger,omitempty"` // garage will close when vehicle moves from `from` to `to`
+		Open  TeslamateGeofenceTrigger `yaml:"open_trigger,omitempty"`  // garage will open when vehicle moves from `from` to `to`
 	}
 
 	// defines which teslamate defined geofence change will trigger an event, e.g. "home" to "not_home"
 	TeslamateGeofenceTrigger struct {
-		From string `yaml:"from"`
-		To   string `yaml:"to"`
+		From string `yaml:"from,omitempty"`
+		To   string `yaml:"to,omitempty"`
 	}
 )
 

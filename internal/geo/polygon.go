@@ -16,9 +16,9 @@ import (
 type (
 	// contains 2 geofences, open and close, each of which are a list of lat/long points defining the polygon
 	PolygonGeofence struct {
-		Close   []Point `yaml:"close"` // list of points defining a polygon; when vehicle moves from inside this geofence to outside, garage will close
-		Open    []Point `yaml:"open"`  // list of points defining a polygon; when vehicle moves from outside this geofence to inside, garage will open
-		KMLFile string  `yaml:"kml_file"`
+		Close   []Point `yaml:"close,omitempty"` // list of points defining a polygon; when vehicle moves from inside this geofence to outside, garage will close
+		Open    []Point `yaml:"open,omitempty"`  // list of points defining a polygon; when vehicle moves from outside this geofence to inside, garage will open
+		KMLFile string  `yaml:"kml_file,omitempty"`
 	}
 
 	// kml schema to parse coordinates from kml file for polygon geofences

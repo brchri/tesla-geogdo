@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	asciiArt "github.com/common-nighthawk/go-figure"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,15 +22,18 @@ type question struct {
 
 var reader = bufio.NewReader(os.Stdin)
 var yesNoRegexString = "^(y|Y|n|N)$"
+
 var isYesRegex = regexp.MustCompile("y|Y")
 var isNoRegex = regexp.MustCompile("n|N")
 var yesNoInvalidResponse = "Please respond with y or n"
 
 func RunWizard() {
+	asciiArt.NewFigure("Tesla-GeoGDO Config Wizard", "", false).Print()
+
 	config := map[string]interface{}{}
 	response := promptUser(
 		question{
-			prompt:                 "Would you like to use the wizard to generate your config file? [Y|n]",
+			prompt:                 "\n\nWould you like to use the wizard to generate your config file? [Y|n]",
 			validResponseRegex:     "^(y|Y|n|N)$",
 			invalidResponseMessage: "Please respond with y or n",
 			defaultResponse:        "y",
@@ -39,7 +43,7 @@ func RunWizard() {
 		return
 	}
 
-	// config["global"] = runGlobalPrompts()
+	config["global"] = runGlobalPrompts()
 	config["garage_doors"] = runGarageDoorsPrompts()
 
 	var b bytes.Buffer
@@ -47,13 +51,39 @@ func RunWizard() {
 	yamlEncoder.SetIndent(2)
 	yamlEncoder.Encode(config)
 	yamlString := b.String()
-	fmt.Print("\n\n" + yamlString)
+	fmt.Print("\n\n####################### CONFIG FILE #######################")
+	fmt.Print("\n\n" + yamlString + "\n\n")
+	fmt.Print("##################### END CONFIG FILE #####################\n\n")
+
+	asciiArt.NewFigure("Config Wizard Complete", "", false)
+
+	fmt.Println("Congratulations on completing the config wizard. You can view your generated config above. You can choose to save this file automatically now, or you can copy and paste the contents above into your config file location.")
+	response = promptUser(question{
+		prompt:                 "Save file now? [Y|n]",
+		validResponseRegex:     yesNoRegexString,
+		invalidResponseMessage: yesNoInvalidResponse,
+		defaultResponse:        "y",
+	})
+	if isNoRegex.MatchString(response) {
+		return
+	}
+	filePath := promptUser(question{
+		prompt:             "Where should the config file be saved? (remember, if running in a container, file path must be relative to container's file system) [/app/config/config.yml]",
+		validResponseRegex: ".*",
+		defaultResponse:    "/app/config/config.yml",
+	})
+	err := os.WriteFile(filePath, b.Bytes(), 0644)
+	if err != nil {
+		fmt.Printf("ERROR: Unable to write file to %s", filePath)
+	}
 }
 
 func runGlobalPrompts() interface{} {
+	asciiArt.NewFigure("Global Config", "", false).Print()
+
 	response := promptUser(
 		question{
-			prompt:             "What is the DNS or IP of your tracker's MQTT broker (e.g. teslamate)? Note - if running in a container, you should not use localhost or 127.0.0.1",
+			prompt:             "\nWhat is the DNS or IP of your tracker's MQTT broker (e.g. teslamate)? Note - if running in a container, you should not use localhost or 127.0.0.1",
 			validResponseRegex: ".+",
 		},
 	)
@@ -143,31 +173,33 @@ func runGlobalPrompts() interface{} {
 }
 
 func runGarageDoorsPrompts() []interface{} {
-	fmt.Println("We will now configure one or more garage doors, which will include geofences, openers, and trackers")
+	asciiArt.NewFigure("Garage Doors", "", false).Print()
+
+	fmt.Print("\nWe will now configure one or more garage doors, which will include geofences, openers, and trackers\n\n")
 	garage_doors := []interface{}{}
 	re := regexp.MustCompile("n|N")
 
 	for {
 		garage_door := map[string]interface{}{}
 		var response string
-		// response = promptUser(
-		// 	question{
-		// 		prompt:                 "What type of geofence would you like to configure for this garage door (more doors can be added later)?  [c|t|p]\nc: circular\nt: teslamate\np: polygon",
-		// 		validResponseRegex:     "^(c|t|p|C|T|P)$",
-		// 		invalidResponseMessage: "Please enter c (for circular), t (for teslamate), or p (for polygon)",
-		// 	},
-		// )
-		// switch response {
-		// case "c":
-		// 	garage_door["geofence"] = runCircularGeofencePrompts()
-		// case "t":
-		// 	garage_door["geofence"] = runTeslamateGeofencePrompts()
-		// case "p":
-		// 	garage_door["geofence"] = runPolygonGeofencePrompts()
-		// }
+		response = promptUser(
+			question{
+				prompt:                 "What type of geofence would you like to configure for this garage door (more doors can be added later)?  [c|t|p]\nc: circular\nt: teslamate\np: polygon",
+				validResponseRegex:     "^(c|t|p|C|T|P)$",
+				invalidResponseMessage: "Please enter c (for circular), t (for teslamate), or p (for polygon)",
+			},
+		)
+		switch response {
+		case "c":
+			garage_door["geofence"] = runCircularGeofencePrompts()
+		case "t":
+			garage_door["geofence"] = runTeslamateGeofencePrompts()
+		case "p":
+			garage_door["geofence"] = runPolygonGeofencePrompts()
+		}
 
 		response = promptUser(question{
-			prompt:                 "What type of garage door opener would you like to configure for this garage door? [ha|hb|r|h|m]\nha: Home Assistant\nhb: Homebridge\nr: ratgdo (MQTT firmware only; for ESP Home, control via Home Assistant or Homebridge\nh: Generic HTTP\nm: Generic MQTT",
+			prompt:                 "\nWhat type of garage door opener would you like to configure for this garage door? [ha|hb|r|h|m]\nha: Home Assistant\nhb: Homebridge\nr: ratgdo (MQTT firmware only; for ESP Home, control via Home Assistant or Homebridge\nh: Generic HTTP\nm: Generic MQTT",
 			validResponseRegex:     "^(ha|hb|r|h|m)$",
 			invalidResponseMessage: "Please enter ha (for Home Assistant), hb (for Homebridge), r (for ratgdo), h (for generic HTTP), or m (for generic MQTT)",
 		})
@@ -189,8 +221,10 @@ func runGarageDoorsPrompts() []interface{} {
 
 		garage_doors = append(garage_doors, garage_door)
 
+		asciiArt.NewFigure("Garage Door Complete", "", false).Print()
+
 		response = promptUser(question{
-			prompt:                 "Would you like to configure another garage door? [y|n]",
+			prompt:                 "\nWould you like to configure another garage door? [y|n]",
 			validResponseRegex:     "^(y|Y|n|N)$",
 			invalidResponseMessage: "Please respond with y or n",
 		})
