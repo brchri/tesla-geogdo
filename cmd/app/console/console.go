@@ -93,18 +93,31 @@ func RunWizard() {
 }
 
 func runGlobalPrompts() interface{} {
+	type Global struct {
+		TrackerMqttSettings struct {
+			Connection struct {
+				Host          string `yaml:"host"`
+				Port          int    `yaml:"port"`
+				ClientId      string `yaml:"client_id,omitempty"`
+				User          string `yaml:"user"`
+				Pass          string `yaml:"pass"`
+				UseTls        bool   `yaml:"use_tls,omitempty"`
+				SkipTlsVerify bool   `yaml:"skip_tls_verify"`
+			} `yaml:"connection"`
+		} `yaml:"tracker_mqtt_settings"`
+		Cooldown int `yaml:"cooldown,omitempty"`
+	}
 	asciiArt.NewFigure("Global Config", "", false).Print()
 
-	response := promptUser(
+	global := Global{}
+
+	global.TrackerMqttSettings.Connection.Host = promptUser(
 		question{
 			prompt:             "\nWhat is the DNS or IP of your tracker's MQTT broker (e.g. teslamate)? Note - if running in a container, you should not use localhost or 127.0.0.1",
 			validResponseRegex: ".+",
 		},
 	)
-	tracker_connection := map[string]interface{}{
-		"host": response,
-	}
-	response = promptUser(
+	response := promptUser(
 		question{
 			prompt:                 "What is the port of your tracker's MQTT broker (e.g. teslamate)? [1883]",
 			validResponseRegex:     "^\\d{1,5}$",
@@ -112,35 +125,26 @@ func runGlobalPrompts() interface{} {
 			defaultResponse:        "1883",
 		},
 	)
-	port, _ := strconv.ParseFloat(response, 64)
-	tracker_connection["port"] = port
-	response = promptUser(
+	port, _ := strconv.Atoi(response)
+	global.TrackerMqttSettings.Connection.Port = port
+	global.TrackerMqttSettings.Connection.ClientId = promptUser(
 		question{
 			prompt:             "Please enter the MQTT client ID to connect to the broker (can be left blank to auto generate at runtime): []",
 			validResponseRegex: ".*",
 		},
 	)
-	if response != "" {
-		tracker_connection["client_id"] = response
-	}
-	response = promptUser(
+	global.TrackerMqttSettings.Connection.User = promptUser(
 		question{
 			prompt:             "If your MQTT broker requires authentication, please enter the username: []",
 			validResponseRegex: ".*",
 		},
 	)
-	if response != "" {
-		tracker_connection["user"] = response
-	}
-	response = promptUser(
+	global.TrackerMqttSettings.Connection.Pass = promptUser(
 		question{
 			prompt:             "If your MQTT broker requires authentication, please enter the password (your typing will not be masked!); you can also enter this later: []",
 			validResponseRegex: ".*",
 		},
 	)
-	if response != "" {
-		tracker_connection["pass"] = response
-	}
 	response = promptUser(
 		question{
 			prompt:                 "Does your broker require TLS? [y|N]",
@@ -149,8 +153,8 @@ func runGlobalPrompts() interface{} {
 			defaultResponse:        "n",
 		},
 	)
-	if match, _ := regexp.MatchString("y|Y", response); match {
-		tracker_connection["use_tls"] = true
+	if isYesRegex.MatchString(response) {
+		global.TrackerMqttSettings.Connection.UseTls = true
 		response = promptUser(
 			question{
 				prompt:                 "Do you want to skip TLS verification (useful for self-signed certificates)? [y|N]",
@@ -159,17 +163,9 @@ func runGlobalPrompts() interface{} {
 				defaultResponse:        "n",
 			},
 		)
-		if match, _ := regexp.MatchString("y|Y", response); match {
-			tracker_connection["skip_tls_verify"] = true
+		if isYesRegex.MatchString(response) {
+			global.TrackerMqttSettings.Connection.SkipTlsVerify = true
 		}
-	}
-
-	tracker_mqtt_settings := map[string]interface{}{
-		"connection": tracker_connection,
-	}
-
-	global_config := map[string]interface{}{
-		"tracker_mqtt_settings": tracker_mqtt_settings,
 	}
 
 	response = promptUser(
@@ -181,9 +177,9 @@ func runGlobalPrompts() interface{} {
 	)
 	if len(response) > 0 {
 		cooldown, _ := strconv.Atoi(response)
-		global_config["cooldown"] = cooldown
+		global.Cooldown = cooldown
 	}
-	return global_config
+	return global
 }
 
 func runGarageDoorsPrompts() []interface{} {
