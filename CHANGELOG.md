@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2024.01.13
+
+### Added
+- config wizard for generating config files via interactive user prompts
+
+### Changed
+
+### Fixed
+
 ## [2.1.0] - 2024.01.01
 
 ### Added
