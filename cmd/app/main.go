@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/brchri/tesla-geogdo/cmd/app/console"
 	"github.com/brchri/tesla-geogdo/internal/geo"
 	"github.com/google/uuid"
 	logger "github.com/sirupsen/logrus"
@@ -68,16 +69,23 @@ func init() {
 func parseArgs() {
 	// set up flags for parsing args
 	var getVersion bool
+	var runWizardFlag bool
 	flag.StringVar(&configFile, "config", "", "location of config file")
 	flag.StringVar(&configFile, "c", "", "location of config file")
 	flag.BoolVar(&util.Config.Testing, "testing", false, "test case")
 	flag.BoolVar(&getVersion, "v", false, "print version info and return")
 	flag.BoolVar(&getVersion, "version", false, "print version info and return")
+	flag.BoolVar(&runWizardFlag, "wizard", false, "run the config wizard")
 	flag.Parse()
 
 	if getVersion {
 		versionInfo := fmt.Sprintf("%s %s %s/%s; commit hash %s", filepath.Base(os.Args[0]), version, runtime.GOOS, runtime.GOARCH, commitHash)
 		fmt.Println(versionInfo)
+		os.Exit(0)
+	}
+
+	if runWizardFlag {
+		console.RunWizard()
 		os.Exit(0)
 	}
 

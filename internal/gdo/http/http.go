@@ -19,9 +19,9 @@ type (
 	HttpGdo interface {
 		SetGarageDoor(string) error
 		ProcessShutdown()
-		// sets a callback function that should be used to extract the status from an endpoint
+		// sets a parsing function that should be used to extract the status from an endpoint
 		// http responses can be complex json blobs, and a simple `open` or `closed` is generally
-		// expected for status; the callback function, if set, will be used to extract that
+		// expected for status; the parsing function, if set, will be used to extract that
 		// simple status from more complex responses
 		SetParseStatusResponseFunc(ParseStatusResponseFunc)
 	}
@@ -35,14 +35,14 @@ type (
 				Port          int    `yaml:"port"`
 				User          string `yaml:"user"`
 				Pass          string `yaml:"pass"`
-				UseTls        bool   `yaml:"use_tls"`
-				SkipTlsVerify bool   `yaml:"skip_tls_verify"`
+				UseTls        bool   `yaml:"use_tls,omitempty"`
+				SkipTlsVerify bool   `yaml:"skip_tls_verify,omitempty"`
 			} `yaml:"connection"`
 			Status struct {
-				Endpoint            string   `yaml:"endpoint"`
-				Headers             []string `yaml:"headers"`
+				Endpoint            string   `yaml:"endpoint,omitempty"`
+				Headers             []string `yaml:"headers,omitempty"`
 				ParseStatusResponse ParseStatusResponseFunc
-			} `yaml:"status"`
+			} `yaml:"status,omitempty"`
 			Commands []Command `yaml:"commands"`
 		} `yaml:"settings"`
 		OpenerType   string `yaml:"type"` // name used by this module can be overridden by consuming modules, such as ratgdo, which is a wrapper for this package
@@ -54,12 +54,12 @@ type (
 	Command struct {
 		Name                string   `yaml:"name"` // e.g. `open` or `close`
 		Endpoint            string   `yaml:"endpoint"`
-		Headers             []string `yaml:"headers"`
+		Headers             []string `yaml:"headers,omitempty"`
 		HttpMethod          string   `yaml:"http_method"`
-		Body                string   `yaml:"body"`
-		RequiredStartState  string   `yaml:"required_start_state"`  // if set, garage door will not operate if current state does not equal this
-		RequiredFinishState string   `yaml:"required_finish_state"` // if set, garage door will monitor the door state compared to this value to determine success
-		Timeout             int      `yaml:"timeout"`               // time to wait for garage door to operate if monitored
+		Body                string   `yaml:"body,omitempty"`
+		RequiredStartState  string   `yaml:"required_start_state,omitempty"`  // if set, garage door will not operate if current state does not equal this
+		RequiredFinishState string   `yaml:"required_finish_state,omitempty"` // if set, garage door will monitor the door state compared to this value to determine success
+		Timeout             int      `yaml:"timeout,omitempty"`               // time to wait for garage door to operate if monitored
 	}
 )
 

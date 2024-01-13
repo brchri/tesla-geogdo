@@ -3,6 +3,7 @@ module github.com/brchri/tesla-geogdo
 go 1.21
 
 require (
+	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/google/uuid v1.3.0
 	github.com/sirupsen/logrus v1.9.3

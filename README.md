@@ -13,6 +13,7 @@ A lightweight app that will operate your smart Garage Door Openers (GDOs) based 
   - [Prerequisite](#prerequisite)
   - [How to Use](#how-to-use)
     - [Docker](#docker)
+    - [Config Wizard](#config-wizard)
     - [Supported Environment Variables](#supported-environment-variables)
     - [API](#api)
   - [Notes](#notes)
@@ -44,7 +45,7 @@ As of v2.0.0, this app supports any location tracker that can publish to an MQTT
 
 ## How to Use
 ### Docker
-This app is provided as a docker image. You will need to create a `config.yml` file (please refer to the [examples directory](/examples) or the simplified [config.simple.example.yml](config.simple.example.yml)), edit it appropriately (***make sure to preserve the leading spaces, they are important***), and then mount it to the container at runtime. For example:
+This app is provided as a docker image. You will need to create a `config.yml` file (please use the [Config Wizard](#config-wizard) or refer to the [examples directory](/examples) or the simplified [config.simple.example.yml](config.simple.example.yml)) and mount it to the container at runtime. For example:
 
 ```bash
 # see docker compose example below for parameter explanations
@@ -70,6 +71,15 @@ services:
     volumes:
       - /etc/tesla-geogdo:/app/config # required, mounts folder containing config file(s) into container
     restart: unless-stopped
+```
+
+### Config Wizard
+As of v2.2.0, there is a built-in config wizard to help you build your config file. The wizard will ask you a series of questions and then provide you with a generated config file that you can use with this app. You can either copy and paste the generated config file upon completion, or you can save it directly if you have a mounted volume with write access. To run the wizard:
+
+```bash
+docker run --rm -it \
+  -v /etc/tesla-geogdo:/app/config \ # required if you want to save the file directly
+  brchri/tesla-geogdo:latest /app/tesla-geogdo --wizard
 ```
 
 ### Supported Environment Variables
