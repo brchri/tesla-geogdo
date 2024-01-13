@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/brchri/tesla-geogdo/internal/gdo/http"
+	"github.com/brchri/tesla-geogdo/internal/gdo/mqtt"
 	asciiArt "github.com/common-nighthawk/go-figure"
 )
 
@@ -300,17 +302,6 @@ func runRatgdoOpenerPrompts() interface{} {
 
 func runHttpOpenerPrompts() interface{} {
 	type (
-		Command struct {
-			Name                string   `yaml:"name"`
-			Endpoint            string   `yaml:"endpoint"`
-			HttpMethod          string   `yaml:"http_method"`
-			Body                string   `yaml:"body,omitempty"`
-			RequiredStartState  string   `yaml:"required_start_state,omitempty"`
-			RequiredFinishState string   `yaml:"required_finish_state,omitempty"`
-			Timeout             int      `yaml:"timeout,omitempty"`
-			Headers             []string `yaml:"headers,omitempty"`
-		}
-
 		HttpOpener struct {
 			Type     string `yaml:"type"`
 			Settings struct {
@@ -323,10 +314,10 @@ func runHttpOpenerPrompts() interface{} {
 					SkipTLSVerify bool   `yaml:"skip_tls_verify,omitempty"`
 				} `yaml:"connection"`
 				Status struct {
-					Endpoint string   `yaml:"status,omitempty"`
+					Endpoint string   `yaml:"endpoint,omitempty"`
 					Headers  []string `yaml:"headers,omitempty"`
 				} `yaml:"status,omitempty"`
-				Commands []Command `yaml:"commands"`
+				Commands []http.Command `yaml:"commands"`
 			} `yaml:"settings"`
 		}
 	)
@@ -400,7 +391,7 @@ func runHttpOpenerPrompts() interface{} {
 	// run twice, once for open and another for close
 	action := "open"
 	for i := 0; i < 2; i++ {
-		command := Command{
+		command := http.Command{
 			Name: action,
 		}
 		command.Endpoint = promptUser(question{
@@ -409,7 +400,7 @@ func runHttpOpenerPrompts() interface{} {
 		})
 		command.HttpMethod = promptUser(question{
 			prompt:                 "Please enter the HTTP method used for the endpoint (e.g. GET, POST, PUT, etc)",
-			validResponseRegex:     "^([Gg][Ee][Tt]|[Pp][Uu][Tt]|[Pp][Oo][Ss][Tt]|[Pp][Aa][Tt][Cc][Hh])$",
+			validResponseRegex:     "^(?i)(get|put|post|patch)$",
 			invalidResponseMessage: "Please use one of the following methods: GET, PUT, POST, PATCH",
 		})
 		command.Body = promptUser(question{
@@ -426,8 +417,9 @@ func runHttpOpenerPrompts() interface{} {
 				validResponseRegex: ".*",
 			})
 			response = promptUser(question{
-				prompt:             fmt.Sprintf("Please enter the timeout (in seconds) to wait for the door to finish %s command. Leave blank to disable: []", strings.ToUpper(action)),
-				validResponseRegex: "^(\\d+)?$",
+				prompt:                 fmt.Sprintf("Please enter the timeout (in seconds) to wait for the door to finish %s command. Leave blank to disable: []", strings.ToUpper(action)),
+				validResponseRegex:     "^(\\d+)?$",
+				invalidResponseMessage: "Please enter a valid number",
 			})
 			if len(response) > 0 {
 				timeout, _ := strconv.Atoi(response)
@@ -473,14 +465,6 @@ func getHttpHeadersHelperPrompts() []string {
 
 func runMqttOpenerPrompts() interface{} {
 	type (
-		Command struct {
-			Name                string `yaml:"name"`
-			Payload             string `yaml:"payload"`
-			TopicSuffix         string `yaml:"topic_suffix"`
-			RequiredStartState  string `yaml:"required_start_state,omitempty"`
-			RequiredFinishState string `yaml:"required_finish_state,omitempty"`
-		}
-
 		mqttOpener struct {
 			Type     string `yaml:"type"`
 			Settings struct {
@@ -499,7 +483,7 @@ func runMqttOpenerPrompts() interface{} {
 					Obstruction  string `yaml:"obstruction,omitempty"`
 					Availability string `yaml:"availability,omitempty"`
 				} `yaml:"topics,omitempty"`
-				Commands []Command `yaml:"commands"`
+				Commands []mqtt.Command `yaml:"commands"`
 			} `yaml:"settings"`
 		}
 	)
@@ -574,7 +558,7 @@ func runMqttOpenerPrompts() interface{} {
 	//commands
 	action := "open"
 	for i := 0; i < 2; i++ {
-		command := Command{
+		command := mqtt.Command{
 			Name: action,
 		}
 		command.Payload = promptUser(question{

@@ -38,7 +38,7 @@ func runTrackerPrompts() []interface{} {
 			tracker.Id = response
 		}
 		response = promptUser(question{
-			prompt:                 "Do your tracker use simple topics (e.g. basic lat and long values are published to separate topics) or a complex topic (e.g. lat and long are published to the same topic in a json structure)? [s|c]\ns: simple\nc: complex",
+			prompt:                 "Does your tracker use simple topics (e.g. basic lat and long values are published to separate topics) or a complex topic (e.g. lat and long are published to the same topic in a json structure)? [s|c]\ns: simple\nc: complex",
 			validResponseRegex:     "^(c|s)$",
 			invalidResponseMessage: "Please enter s (for simple topic) or c (for complex topic)",
 		})
