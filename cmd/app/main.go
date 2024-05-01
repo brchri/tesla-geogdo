@@ -247,7 +247,7 @@ func processComplexTopicPayload(tracker *geo.Tracker, payload string) (geo.Point
 	}
 	payloadType, ok := jsonData["_type"].(string)
 	if ok && payloadType == "lwt" {
-		logger.Debug(fmt.Sprintf("Received lwt for tracker %v", tracker.ID))
+		logger.Debugf("Payload for tracker %v is '_type: lwt'; will not process location update", tracker.ID)
 		return p, nil
 	}
 	lat, ok := jsonData[tracker.ComplexTopic.LatJsonKey].(float64)
