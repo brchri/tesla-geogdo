@@ -204,7 +204,7 @@ func main() {
 					go geo.CheckGeofence(t)
 					break topic
 				case t.ComplexTopic.Topic:
-					logger.Debugf("Received payload for complex toipc %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
+					logger.Debugf("Received payload for complex topic %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
 				default:
 					continue topic // no topic match for this tracker found, move on to next tracker
@@ -244,6 +244,11 @@ func processComplexTopicPayload(tracker *geo.Tracker, payload string) (geo.Point
 	err := json.Unmarshal([]byte(payload), &jsonData)
 	if err != nil {
 		return geo.Point{}, fmt.Errorf("could not unmarshal json string to map object")
+	}
+	payloadType, ok := jsonData["_type"].(string)
+	if ok && payloadType == "lwt" {
+		logger.Debugf("Payload for tracker %v is '_type: lwt'; will not process location update", tracker.ID)
+		return p, nil
 	}
 	lat, ok := jsonData[tracker.ComplexTopic.LatJsonKey].(float64)
 	if ok {

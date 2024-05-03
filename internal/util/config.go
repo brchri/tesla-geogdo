@@ -49,11 +49,15 @@ func init() {
 
 // format log level to always have 5 characters between brackets (e.g. `[INFO ]`)
 func formatLevel(level logger.Level) string {
-	str := fmt.Sprintf("%-7s", level)
-	if len(str) > 7 {
-		return strings.ToUpper(str[:7])
+	displayMap := map[string]string{
+		"INFO":    "INF",
+		"WARNING": "WRN",
+		"DEBUG":   "DBG",
+		"ERROR":   "ERR",
+		"TRACE":   "TRC",
 	}
-	return strings.ToUpper(str)
+
+	return " " + displayMap[strings.ToUpper(fmt.Sprintf("%v", level))] + " "
 }
 
 // custom formatter for logrus package
