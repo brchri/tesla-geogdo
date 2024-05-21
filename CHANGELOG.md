@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2024.05.02
+
+### Added
+
+### Changed
+- standardized log level length to 3 chars
+
+### Fixed
+- error log noise generated when a tracker sends an lwt payload
+
 ## [2.2.0] - 2024.01.13
 
 ### Added
