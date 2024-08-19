@@ -183,11 +183,11 @@ func ParseGarageDoorConfig() {
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(util.Config.GarageDoors)
 	if err != nil {
-		logger.Fatal("Failed to marhsal garage doors yaml object")
+		logger.Fatal("Failed to marshal garage doors yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &GarageDoors)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal garage doors yaml object")
+		logger.Fatal("Failed to unmarshal garage doors yaml object")
 	}
 
 	logger.Debug("Checking garage door configs")
@@ -226,11 +226,11 @@ func newGeofence(config map[string]interface{}) (GeofenceInterface, error) {
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(config)
 	if err != nil {
-		logger.Fatal("Failed to marhsal geofence yaml object")
+		logger.Fatal("Failed to marshal geofence yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &geoConfig)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal geofence yaml object")
+		logger.Fatal("Failed to unmarshal geofence yaml object")
 	}
 	var g GeofenceInterface
 	switch geoConfig.GeofenceType {

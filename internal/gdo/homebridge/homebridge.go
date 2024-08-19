@@ -70,11 +70,11 @@ func NewHomebridgeGdo(config map[string]interface{}) (HomebridgeGdo, error) {
 
 	yamlData, err := yaml.Marshal(config)
 	if err != nil {
-		logger.Fatal("Failed to marhsal garage doors yaml object")
+		logger.Fatal("Failed to marshal garage doors yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &h)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal garage doors yaml object")
+		logger.Fatal("Failed to unmarshal garage doors yaml object")
 	}
 
 	// set port if not set explicitly in the config

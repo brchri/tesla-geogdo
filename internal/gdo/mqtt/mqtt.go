@@ -100,11 +100,11 @@ func NewMqttGdo(config map[string]interface{}) (MqttGdo, error) {
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(config)
 	if err != nil {
-		logger.Fatal("Failed to marhsal garage doors yaml object")
+		logger.Fatal("Failed to marshal garage doors yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &mqttGdo)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal garage doors yaml object")
+		logger.Fatal("Failed to unmarshal garage doors yaml object")
 	}
 
 	if mqttGdo.OpenerType == "" {
