@@ -282,9 +282,12 @@ func (m *mqttGdo) onMqttConnect(client mqtt.Client) {
 // sets mqttGdo properties based on payloads
 func (m *mqttGdo) processMqttMessage(client mqtt.Client, message mqtt.Message) {
 	// update MqttGdo property based on topic suffix (strip shared prefix on the switch)
+	logger.Debugf("Received message on topic %s with payload %s", message.Topic(), string(message.Payload()))
 	switch strings.TrimPrefix(message.Topic(), m.Settings.Topics.Prefix+"/") {
 	case m.Settings.Topics.DoorStatus:
+		logger.Debugf("Setting door status: %s", string(message.Payload()))
 		m.State = string(message.Payload())
+		logger.Debugf("Door status now set to: %s", m.State)
 	case m.Settings.Topics.Availability:
 		m.Availability = string(message.Payload())
 	case m.Settings.Topics.Obstruction:
