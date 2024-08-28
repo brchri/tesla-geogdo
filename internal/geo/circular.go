@@ -55,28 +55,29 @@ func (c *CircularGeofence) getEventChangeAction(tracker *Tracker) (action string
 	// update tracker's current distance, and store the previous distance in a variable
 	prevDistance := tracker.CurDistance
 	tracker.CurDistance = distance(tracker.CurrentLocation, c.Center)
+	logger.Debugf("CircularGeofence Stats - PreviousDistance: %f; CurrentDistance: %f", prevDistance, tracker.CurDistance)
 
 	// check if tracker has crossed a geofence and set an appropriate action
 	if c.CloseDistance > 0 { // is valid close distance defined
 		if prevDistance <= c.CloseDistance &&
 			tracker.CurDistance > c.CloseDistance { // tracker was within close geofence, but now beyond it (tracker left geofence)
-			logger.Debugf("Tracker left close geofence: Close Radius: %v; PreviousDistance: %v; CurrentDistance: %v", c.CloseDistance, prevDistance, tracker.CurDistance)
+			logger.Debugf("Tracker left close geofence: Close Radius: %f", c.CloseDistance)
 			action = ActionClose
 		}
 		if prevDistance > c.CloseDistance &&
 			tracker.CurDistance <= c.CloseDistance { // tracker just entered close geofence
-			logger.Debugf("Tracker entered close geofence: Close Radius: %v; PreviousDistance: %v; CurrentDistance: %v", c.CloseDistance, prevDistance, tracker.CurDistance)
+			logger.Debugf("Tracker entered close geofence: Close Radius: %f", c.CloseDistance)
 			tracker.LastEnteredCloseGeo = time.Now()
 		}
 	}
 	if c.OpenDistance > 0 { // is valid open distance defined
 		if prevDistance >= c.OpenDistance &&
 			tracker.CurDistance < c.OpenDistance { // tracker was outside of open geofence, but is now within it (tracker entered geofence)
-			logger.Debugf("Tracker entered open geofence: Open Radius: %v; PreviousDistance: %v; CurrentDistance: %v", c.OpenDistance, prevDistance, tracker.CurDistance)
+			logger.Debugf("Tracker entered open geofence: Open Radius: %f", c.OpenDistance)
 			action = ActionOpen
 		} else if prevDistance < c.OpenDistance &&
 			tracker.CurDistance >= c.OpenDistance { // tracker just left open geofence
-			logger.Debugf("Tracker left open geofence: Open Radius: %v; PreviousDistance: %v; CurrentDistance: %v", c.OpenDistance, prevDistance, tracker.CurDistance)
+			logger.Debugf("Tracker left open geofence: Open Radius: %f", c.OpenDistance)
 			tracker.LastLeftOpenGeo = time.Now()
 		}
 	}
