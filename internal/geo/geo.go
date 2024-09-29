@@ -19,21 +19,22 @@ type (
 	}
 
 	Tracker struct {
-		ID                  interface{} `yaml:"id"` // mqtt identifier for vehicle
-		GarageDoor          *GarageDoor // bidirectional pointer to GarageDoor containing tracker
-		CurrentLocation     Point       // current vehicle location
-		LocationUpdate      chan Point  // channel to receive location updates
-		CurDistance         float64     // current distance from garagedoor location
-		PrevGeofence        string      // geofence previously ascribed to tracker
-		CurGeofence         string      // updated geofence ascribed to tracker when published to mqtt
-		InsidePolyOpenGeo   bool        // indicates if tracker is currently inside the polygon_open_geofence
-		InsidePolyCloseGeo  bool        // indicates if tracker is currently inside the polygon_close_geofence
-		LastEnteredCloseGeo time.Time   // timestamp of when tracker last entered the close geofence; used to prevent flapping
-		LastLeftOpenGeo     time.Time   // timestamp of when tracker last left the open geofence; used to prevent flapping
-		LatTopic            string      `yaml:"lat_topic"`
-		LngTopic            string      `yaml:"lng_topic"`
-		GeofenceTopic       string      `yaml:"geofence_topic"` // topic for publishing a geofence name where a tracker resides, e.g. teslamate geofence indicating 'home' or 'not_home'
-		ComplexTopic        struct {
+		ID                      interface{} `yaml:"id"` // mqtt identifier for vehicle
+		GarageDoor              *GarageDoor // bidirectional pointer to GarageDoor containing tracker
+		CurrentLocation         Point       // current vehicle location
+		LocationUpdate          chan Point  // channel to receive location updates
+		CurDistance             float64     // current distance from garagedoor location
+		PrevGeofence            string      // geofence previously ascribed to tracker
+		CurGeofence             string      // updated geofence ascribed to tracker when published to mqtt
+		InsidePolyOpenGeo       bool        // indicates if tracker is currently inside the polygon_open_geofence
+		InsidePolyCloseGeo      bool        // indicates if tracker is currently inside the polygon_close_geofence
+		InsidePolyRestrictedGeo bool        // indicates if tracker is currently inside the polygon_restricted_geofence
+		LastEnteredCloseGeo     time.Time   // timestamp of when tracker last entered the close geofence; used to prevent flapping
+		LastLeftOpenGeo         time.Time   // timestamp of when tracker last left the open geofence; used to prevent flapping
+		LatTopic                string      `yaml:"lat_topic"`
+		LngTopic                string      `yaml:"lng_topic"`
+		GeofenceTopic           string      `yaml:"geofence_topic"` // topic for publishing a geofence name where a tracker resides, e.g. teslamate geofence indicating 'home' or 'not_home'
+		ComplexTopic            struct {
 			Topic      string `yaml:"topic"`
 			LatJsonKey string `yaml:"lat_json_key"`
 			LngJsonKey string `yaml:"lng_json_key"`

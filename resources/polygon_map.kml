@@ -40,13 +40,30 @@
       </Polygon>
     </Placemark>
     <Placemark id="2">
+      <name>restricted</name>
+      <ExtendedData></ExtendedData>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -123.7998033090239,46.192958467582514
+              -123.7998033090239,46.19279440766502
+              -123.79950958978756,46.19279440766502
+              -123.79950958978756,46.192958467582514
+              -123.7998033090239,46.192958467582514
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark id="3">
       <name>close_test</name>
       <ExtendedData></ExtendedData>
       <Point>
         <coordinates>-123.79984989897177,46.19292902096646</coordinates>
       </Point>
     </Placemark>
-    <Placemark id="3">
+    <Placemark id="4">
       <name>open_test</name>
       <ExtendedData></ExtendedData>
       <Point>

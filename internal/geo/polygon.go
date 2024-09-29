@@ -14,11 +14,12 @@ import (
 )
 
 type (
-	// contains 2 geofences, open and close, each of which are a list of lat/long points defining the polygon
+	// contains 3 geofences, open, close, and restricted, each of which are a list of lat/long points defining the polygon
 	PolygonGeofence struct {
-		Close   []Point `yaml:"close,omitempty"` // list of points defining a polygon; when vehicle moves from inside this geofence to outside, garage will close
-		Open    []Point `yaml:"open,omitempty"`  // list of points defining a polygon; when vehicle moves from outside this geofence to inside, garage will open
-		KMLFile string  `yaml:"kml_file,omitempty"`
+		Close      []Point `yaml:"close,omitempty"`      // list of points defining a polygon; when vehicle moves from inside this geofence to outside, garage will close
+		Open       []Point `yaml:"open,omitempty"`       // list of points defining a polygon; when vehicle moves from outside this geofence to inside, garage will open
+		Restricted []Point `yaml:"restricted,omitempty"` // list of points defining a polygon; when vehicle moves from inside this geofence to inside open geofence, garage will not open
+		KMLFile    string  `yaml:"kml_file,omitempty"`
 	}
 
 	// kml schema to parse coordinates from kml file for polygon geofences
@@ -55,16 +56,20 @@ func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string)
 
 	isInsideCloseGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Close)
 	isInsideOpenGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Open)
+	isInsideRestrictedGeo := false
+	if len(p.Restricted) > 0 {
+		isInsideRestrictedGeo = isInsidePolygonGeo(tracker.CurrentLocation, p.Restricted)
+	}
 
 	if len(p.Close) > 0 {
-		if tracker.InsidePolyCloseGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close
+		if tracker.InsidePolyCloseGeo && !tracker.InsidePolyRestrictedGeo && !isInsideCloseGeo { // if we were inside the close geofence and now we're not, then close (if also not coming from a restricted zone)
 			action = ActionClose
 		} else if !tracker.InsidePolyCloseGeo && isInsideCloseGeo { // if we just entered the close geo, then set LastNoOpEvent to prevent flapping and accidentally triggering an open
 			tracker.LastEnteredCloseGeo = time.Now()
 		}
 	}
 	if len(p.Open) > 0 {
-		if !tracker.InsidePolyOpenGeo && isInsideOpenGeo { // if we were not inside the open geo and now we are, then open
+		if !tracker.InsidePolyOpenGeo && !tracker.InsidePolyRestrictedGeo && isInsideOpenGeo { // if we were not inside the open geo or the restricted geo, and now we are in the open geo, then open
 			action = ActionOpen
 		} else if tracker.InsidePolyOpenGeo && !isInsideOpenGeo { // if we just left the open geo, then set LastNoOpEvent to prevent flapping and accidentally triggering an open
 			tracker.LastLeftOpenGeo = time.Now()
@@ -73,6 +78,7 @@ func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string)
 
 	tracker.InsidePolyCloseGeo = isInsideCloseGeo
 	tracker.InsidePolyOpenGeo = isInsideOpenGeo
+	tracker.InsidePolyRestrictedGeo = isInsideRestrictedGeo
 
 	return
 }
@@ -112,7 +118,7 @@ func loadKMLFile(p *PolygonGeofence) error {
 	for _, placemark := range kml.Document.Placemarks {
 		var polygonGeoPoints []Point
 		// geofences must be named `open` or `close` or they're considered irrelevant
-		if placemark.Name != "open" && placemark.Name != "close" {
+		if placemark.Name != "open" && placemark.Name != "close" && placemark.Name != "restricted" {
 			continue
 		}
 
@@ -145,6 +151,8 @@ func loadKMLFile(p *PolygonGeofence) error {
 			p.Open = polygonGeoPoints
 		case "close":
 			p.Close = polygonGeoPoints
+		case "restricted":
+			p.Restricted = polygonGeoPoints
 		}
 	}
 

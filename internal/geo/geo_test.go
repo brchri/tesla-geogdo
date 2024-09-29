@@ -265,6 +265,36 @@ func Test_CheckPolyGeofence_Arriving(t *testing.T) {
 	assert.Equal(t, checkGeofenceWrapper(polygonTracker), true)
 }
 
+// if arriving from a restricted area, should not trigger any action
+func Test_CheckPolyGeofence_ArrivingFromRestricted(t *testing.T) {
+	mockGdo := &mocks.GDO{}
+	polygonTracker.GarageDoor.Opener = mockGdo
+	defer mockGdo.AssertExpectations(t)
+
+	polygonTracker.InsidePolyCloseGeo = false
+	polygonTracker.InsidePolyOpenGeo = false
+	polygonTracker.InsidePolyRestrictedGeo = true
+	polygonTracker.CurrentLocation.Lat = 46.19243683948096
+	polygonTracker.CurrentLocation.Lng = -123.80103692981524
+
+	assert.Equal(t, checkGeofenceWrapper(polygonTracker), true)
+}
+
+// if leaving from a restricted area, should not trigger any action
+func Test_CheckPolyGeofence_LeavingFromRestricted(t *testing.T) {
+	mockGdo := &mocks.GDO{}
+	polygonTracker.GarageDoor.Opener = mockGdo
+	defer mockGdo.AssertExpectations(t)
+
+	polygonTracker.InsidePolyCloseGeo = true
+	polygonTracker.InsidePolyOpenGeo = true
+	polygonTracker.InsidePolyRestrictedGeo = true
+	polygonTracker.CurrentLocation.Lat = 46.19292902096646
+	polygonTracker.CurrentLocation.Lng = -123.79984989897177
+
+	assert.Equal(t, checkGeofenceWrapper(polygonTracker), true)
+}
+
 // if close is not defined, should not trigger any action
 func Test_CheckPolyGeofence_Leaving_NoClose(t *testing.T) {
 	mockGdo := &mocks.GDO{}
