@@ -71,11 +71,11 @@ func (c *CircularGeofence) parseSettings(config map[string]interface{}) error {
 	yamlData, err := yaml.Marshal(config)
 	var settings CircularGeofence
 	if err != nil {
-		return fmt.Errorf("failed to marhsal geofence yaml object, error: %v", err)
+		return fmt.Errorf("failed to marshal geofence yaml object, error: %v", err)
 	}
 	err = yaml.Unmarshal(yamlData, &settings)
 	if err != nil {
-		return fmt.Errorf("failed to unmarhsal geofence yaml object, error: %v", err)
+		return fmt.Errorf("failed to unmarshal geofence yaml object, error: %v", err)
 	}
 	*c = settings
 	return nil

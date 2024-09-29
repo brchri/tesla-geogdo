@@ -44,7 +44,7 @@ func NewHomeAssistantGdo(config map[string]interface{}) (httpGdo.HttpGdo, error)
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(config)
 	if err != nil {
-		logger.Fatal("Failed to marhsal garage doors yaml object")
+		logger.Fatal("Failed to marshal garage doors yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &hassGdo)
 	if err != nil {

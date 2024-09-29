@@ -40,11 +40,11 @@ func NewRatgdo(config map[string]interface{}) (mqttGdo.MqttGdo, error) {
 	// marshall map[string]interface into yaml, then unmarshal to object based on yaml def in struct
 	yamlData, err := yaml.Marshal(config)
 	if err != nil {
-		logger.Fatal("Failed to marhsal garage doors yaml object")
+		logger.Fatal("Failed to marshal garage doors yaml object")
 	}
 	err = yaml.Unmarshal(yamlData, &ratgdo)
 	if err != nil {
-		logger.Fatal("Failed to unmarhsal garage doors yaml object")
+		logger.Fatal("Failed to unmarshal garage doors yaml object")
 	}
 
 	// add ratgdo-specific mqtt settings to the config object
