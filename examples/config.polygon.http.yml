@@ -51,6 +51,17 @@ garage_doors:
             lng: -123.79950958978756
           - lat: 46.192958467582514
             lng: -123.7998033090239
+        restricted: # when a vehicle moves into an open geofence or out of a close geofence __from or while in a restricted zone__, no action will trigger
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.7998033090239
+          - lat: 46.19279440766502
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.79950958978756
+          - lat: 46.192958467582514
+            lng: -123.7998033090239
     opener:  # defines how to control the garage
       type: http # type of garage door opener to use
       settings:
