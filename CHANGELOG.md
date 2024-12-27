@@ -1,6 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2024.12.27
+
+### Added
+- restricted zones to polygon geofence
+
+### Changed
+
+### Fixed
+- package security vulnerabilities
+- clear-text logging of sensitive information
+
 ## [2.2.1] - 2024.05.02
 
 ### Added
