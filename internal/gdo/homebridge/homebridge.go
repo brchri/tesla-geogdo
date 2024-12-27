@@ -294,7 +294,7 @@ func (h *homebridgeGdo) ExecuteApiCall(endpoint string, method string, body stri
 	logger.Debug("executing api call:")
 	logger.Debugf(" url: %s", url)
 	logger.Debugf(" method: %s", method)
-	logger.Debugf(" body: %s", body)
+	logger.Debugf(" body: %s", strings.ReplaceAll(body, h.Settings.Connection.Pass, "REDACTED"))
 
 	// execute request
 	resp, err := client.Do(req)
