@@ -202,7 +202,6 @@ func main() {
 					t.CurGeofence = string(message.Payload())
 					logger.Infof("Received geo for tracker %v: %s", t.ID, t.CurGeofence)
 					go geo.CheckGeofence(t)
-					break topic
 				case t.ComplexTopic.Topic:
 					logger.Debugf("Received payload for complex topic %s for tracker %v, payload:\n%s", message.Topic(), t.ID, string(message.Payload()))
 					point, err = processComplexTopicPayload(t, string(message.Payload()))
@@ -212,16 +211,14 @@ func main() {
 
 				if err != nil {
 					logger.Errorf("could not parse message payload from topic for tracker %v, received error %v", t.ID, err)
-					break topic
 				}
 
 				// if a point is now defined, process a location update and stop looking for matching topics
 				if point != (geo.Point{}) {
-					go func(p geo.Point) {
+					go func(p geo.Point, t *geo.Tracker) {
 						// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
-						t.LocationUpdate <- point
-					}(point)
-					break topic
+						t.LocationUpdate <- p
+					}(point, t)
 				}
 			}
 
