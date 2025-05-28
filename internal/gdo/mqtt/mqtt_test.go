@@ -106,7 +106,7 @@ func Test_InitializeClient(t *testing.T) {
 	mockMqttClient.EXPECT().IsConnected().Once().Return(true)
 
 	// override mqtt.NewClient function with mocked function
-	mqttNewClientFunc = func(o *mqtt.ClientOptions) mqtt.Client { return mockMqttClient }
+	mqttNewClientFunc = func(_ *mqtt.ClientOptions) mqtt.Client { return mockMqttClient }
 
 	// initialize test object
 	mqttGdo := &mqttGdo{}

@@ -55,9 +55,14 @@ func formatLevel(level logger.Level) string {
 		"DEBUG":   "DBG",
 		"ERROR":   "ERR",
 		"TRACE":   "TRC",
+		"FATAL":   "FTL",
 	}
 
-	return " " + displayMap[strings.ToUpper(fmt.Sprintf("%v", level))] + " "
+	displayLevel, ok := displayMap[strings.ToUpper(fmt.Sprintf("%v", level))]
+	if !ok {
+		displayLevel = strings.ToUpper(fmt.Sprintf("%v", level))
+	}
+	return " " + displayLevel + " "
 }
 
 // custom formatter for logrus package
