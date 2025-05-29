@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine3.18 AS builder
+FROM golang:1.23-alpine3.21 AS builder
 
 ARG BUILD_VERSION
 ARG BUILD_HASH
@@ -12,7 +12,7 @@ RUN cp examples/config.multiple.yml ./config.example.yml && \
     go test ./... && \
     go build -ldflags="-X main.version=${BUILD_VERSION} -X main.commitHash=${BUILD_HASH:0:7}" -o tesla-geogdo cmd/app/main.go
 
-FROM alpine:3.18
+FROM alpine:3.21
 
 ARG USER_UID=10000
 ARG USER_GID=$USER_UID
