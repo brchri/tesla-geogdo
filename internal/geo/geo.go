@@ -131,7 +131,7 @@ func CheckGeofence(tracker *Tracker) {
 		}
 
 		// create retry loop to set the garage door state
-		for i := 1; i > 0; i-- { // temporarily setting to 1 to disable retry logic while myq auth endpoint stabilizes to avoid rate limiting
+		for i := 3; i > 0; i-- {
 			err := tracker.GarageDoor.Opener.SetGarageDoor(action)
 			if err == nil {
 				// no error received, so breaking retry loop)
