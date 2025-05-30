@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.3.1] - 2025.05.29
+
+### Added
+
+### Changed
+- increase retry limit for setting garage door status
+- allow multiple doors to share trackers
+
+### Fixed
+- package security vulnerabilities
+- fatal error logging
+
 ## [2.3.0] - 2024.12.27
 
 ### Added
