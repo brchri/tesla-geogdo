@@ -38,6 +38,7 @@ garage_doors:
           use_tls: false # optional, instructs app to connect to mqtt broker using tls (defaults to false)
           skip_tls_verify: false # optional, if use_tls = true, this option indicates whether the client should skip certificate validation on the mqtt broker
         topic_prefix: home/garage/Main # required
+        disable_required_start_state_check: true # optional, disables the requirement that the garage door must be in a specific state before operating (e.g. closed) to prevent accidental operations
     trackers: # defines which trackers should be used to operate garage; list of trackers includes an arbitrary (but unique) id and topic definitions to retrieve latitude and longitude
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker

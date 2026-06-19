@@ -19,7 +19,8 @@ var sampleYaml = map[string]interface{}{
 			"use_tls":         false,
 			"skip_tls_verify": false,
 		},
-		"topic_prefix": "home/garage/Main",
+		"topic_prefix":                       "home/garage/Main",
+		"disable_required_start_state_check": true,
 	},
 }
 
