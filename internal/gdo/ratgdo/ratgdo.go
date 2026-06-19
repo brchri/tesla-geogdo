@@ -13,11 +13,9 @@ import (
 // stubbed mqtt struct to extract the topic prefix from the yaml to pass into what is expected by mqttGdo
 type Ratgdo struct {
 	MqttSettings struct {
-		TopicPrefix string `yaml:"topic_prefix"`
+		TopicPrefix                    string `yaml:"topic_prefix"`
+		DisableRequiredStartStateCheck bool   `yaml:"disable_required_start_state_check"`
 	} `yaml:"mqtt_settings"`
-	Settings struct {
-		DisableRequiredStartStateCheck bool `yaml:"disable_required_start_state_check"`
-	} `yaml:"settings"`
 }
 
 func init() {
@@ -75,7 +73,7 @@ func NewRatgdo(config map[string]interface{}) (mqttGdo.MqttGdo, error) {
 			},
 		}
 
-		if ratgdo.Settings.DisableRequiredStartStateCheck {
+		if ratgdo.MqttSettings.DisableRequiredStartStateCheck {
 			// remove the required_start_state field from all commands
 			for _, command := range mqttSettings["commands"].([]map[string]string) {
 				delete(command, "required_start_state")
