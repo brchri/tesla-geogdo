@@ -33,6 +33,8 @@ garage_doors:
           client_id: tesla-geogdo-ratgdo1
           # WARNING!! client_id's MUST BE UNIQUE for any mqtt client that shares a broker !!
         topic_prefix: home/garage/Main
+      settings:
+        disable_required_start_state_check: true
     trackers: # defines which trackers should be used to operate garage; list of trackers includes an arbitrary (but unique) id and topic definitions to retrieve latitude and longitude
       - id: 1 # required, some identifier, can be number or string
         lat_topic: teslamate/cars/1/latitude # topic to retrieve latitude for tracker

@@ -21,6 +21,9 @@ var sampleYaml = map[string]interface{}{
 		},
 		"topic_prefix": "home/garage/Main",
 	},
+	"settings": map[string]interface{}{
+		"disable_required_start_state_check": true,
+	},
 }
 
 // Since ratgdo is just a wrapper for mqttGdo with some predefined configs,
