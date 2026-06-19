@@ -51,14 +51,17 @@ func init() {
 // uses ray-casting algorithm, assumes a simple geofence (no holes or border cross points)
 func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string) {
 	if !tracker.CurrentLocation.IsPointDefined() {
+		logger.Debugf("Tracker %v has undefined location, cannot check geofence", tracker.ID)
 		return // need valid lat and long to check geofence
 	}
 
 	isInsideCloseGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Close)
 	isInsideOpenGeo := isInsidePolygonGeo(tracker.CurrentLocation, p.Open)
 	isInsideRestrictedGeo := false
+	logger.Debugf("Tracker %v is inside close geo: %v, inside open geo: %v", tracker.ID, isInsideCloseGeo, isInsideOpenGeo)
 	if len(p.Restricted) > 0 {
 		isInsideRestrictedGeo = isInsidePolygonGeo(tracker.CurrentLocation, p.Restricted)
+		logger.Debugf("Tracker %v is inside restricted geo: %v", tracker.ID, isInsideRestrictedGeo)
 	}
 
 	if len(p.Close) > 0 {
@@ -84,6 +87,7 @@ func (p *PolygonGeofence) getEventChangeAction(tracker *Tracker) (action string)
 }
 
 func isInsidePolygonGeo(p Point, geofence []Point) bool {
+	logger.Debugf("Checking if point %v is inside polygon geofence with %d points", p, len(geofence))
 	var intersections int
 	j := len(geofence) - 1
 

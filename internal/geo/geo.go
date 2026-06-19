@@ -89,6 +89,7 @@ func (p Point) IsPointDefined() bool {
 
 // check if outside close geo or inside open geo and set garage door state accordingly
 func CheckGeofence(tracker *Tracker) {
+	logger.Debugf("Checking geofence for tracker %v: %v", tracker.ID, tracker.CurrentLocation)
 
 	// get action based on either geo cross events or distance threshold cross events
 	action := tracker.GarageDoor.Geofence.getEventChangeAction(tracker)

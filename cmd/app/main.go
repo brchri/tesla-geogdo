@@ -217,6 +217,7 @@ func main() {
 				if point != (geo.Point{}) {
 					go func(p geo.Point, t *geo.Tracker) {
 						// send as goroutine so it doesn't block other vehicle updates if channel buffer is full
+						logger.Debugf("Sending location update for tracker %v: %v", t.ID, p)
 						t.LocationUpdate <- p
 					}(point, t)
 				}
@@ -266,6 +267,7 @@ func processComplexTopicPayload(tracker *geo.Tracker, payload string) (geo.Point
 // this allows threaded geofence checks for multiple vehicles, while each individual vehicle
 // does not have parallel threads executing checks
 func processLocationUpdates(tracker *geo.Tracker) {
+	logger.Debugf("Starting location update processor for tracker %v", tracker.ID)
 	for update := range tracker.LocationUpdate {
 		var newLocation bool
 		if update.Lat != 0 {
@@ -277,6 +279,7 @@ func processLocationUpdates(tracker *geo.Tracker) {
 			newLocation = true
 		}
 		if newLocation && tracker.CurrentLocation.IsPointDefined() {
+			logger.Debugf("Processing location update for tracker %v: %v", tracker.ID, tracker.CurrentLocation)
 			geo.CheckGeofence(tracker)
 		}
 	}
