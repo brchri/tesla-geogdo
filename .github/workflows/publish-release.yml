@@ -8,6 +8,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+  actions: write
+
 env:
   REGISTRY_IMAGE: brchri/tesla-geogdo
 
