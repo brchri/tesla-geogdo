@@ -50,6 +50,7 @@ type (
 		GeofenceConfig map[string]interface{} `yaml:"geofence"`
 		OpenerConfig   map[string]interface{} `yaml:"opener"`   // holds gdo config that is parsed on gdo.Initialize
 		Trackers       []*Tracker             `yaml:"trackers"` // trackers housed within this garage
+		Retries        int                    `yaml:"retries"`  // additional attempts after initial failed garage operation
 		OpLock         bool                   // controls if garagedoor has been operated recently to prevent flapping
 	}
 
@@ -130,8 +131,12 @@ func CheckGeofence(tracker *Tracker) {
 			logger.Infof("Attempting to %s garage door for tracker %v at lat %f, long %f", action, tracker.ID, tracker.CurrentLocation.Lat, tracker.CurrentLocation.Lng)
 		}
 
-		// create retry loop to set the garage door state
-		for i := 3; i > 0; i-- {
+		// the configured retry count is additional attempts after the initial attempt
+		retries := tracker.GarageDoor.Retries
+		if retries < 0 {
+			retries = 0
+		}
+		for i := retries + 1; i > 0; i-- {
 			err := tracker.GarageDoor.Opener.SetGarageDoor(action)
 			if err == nil {
 				// no error received, so breaking retry loop)

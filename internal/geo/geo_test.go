@@ -1,6 +1,7 @@
 package geo
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +13,50 @@ import (
 
 	"github.com/brchri/tesla-geogdo/internal/util"
 )
+
+type retryTestGDO struct {
+	results []error
+	calls   int
+}
+
+func (g *retryTestGDO) SetGarageDoor(string) error {
+	result := g.results[g.calls]
+	g.calls++
+	return result
+}
+
+func (*retryTestGDO) ProcessShutdown() {}
+
+type retryTestGeofence struct{}
+
+func (retryTestGeofence) getEventChangeAction(*Tracker) string       { return ActionClose }
+func (retryTestGeofence) parseSettings(map[string]interface{}) error { return nil }
+
+func Test_CheckGeofence_Retries(t *testing.T) {
+	tests := []struct {
+		name      string
+		retries   int
+		results   []error
+		wantCalls int
+	}{
+		{name: "default zero retries", retries: 0, results: []error{errors.New("failed")}, wantCalls: 1},
+		{name: "configured retries", retries: 2, results: []error{errors.New("failed"), errors.New("failed"), errors.New("failed")}, wantCalls: 3},
+		{name: "stops after success", retries: 2, results: []error{errors.New("failed"), nil, errors.New("unused")}, wantCalls: 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opener := &retryTestGDO{results: tt.results}
+			door := &GarageDoor{Geofence: retryTestGeofence{}, Opener: opener, Retries: tt.retries}
+			tracker := &Tracker{GarageDoor: door}
+
+			if !checkGeofenceWrapper(tracker) {
+				t.Fatal("timed out waiting for garage operation")
+			}
+			assert.Equal(t, tt.wantCalls, opener.calls)
+		})
+	}
+}
 
 var (
 	distanceTracker    *Tracker

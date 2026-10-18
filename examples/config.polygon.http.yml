@@ -17,6 +17,7 @@ global:
 
 garage_doors:
   - # main garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence: # custom defined polygonal geofence
       type: polygon
       settings:
