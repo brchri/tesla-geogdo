@@ -17,6 +17,7 @@ global:
 
 garage_doors:
   - # main garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence: # uses geofences defined in teslamate; this method is less reliable and not recommended; see Notes section in the README for details
       type: teslamate
       settings:

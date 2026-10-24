@@ -16,6 +16,7 @@ global:
 
 garage_doors:
   - # main garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence:
       type: circular
       settings:
@@ -42,6 +43,7 @@ garage_doors:
         lng_topic: teslamate/cars/2/longitude # topic to retrieve longitude for tracker
 
   - # 3rd car garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence:
       type: teslamate
       settings:
@@ -78,6 +80,7 @@ garage_doors:
         lng_topic: teslamate/cars/3/longitude # topic to retrieve longitude for tracker
 
   - # 4th car detached garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence:
       type: polygon
       settings:

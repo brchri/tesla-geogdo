@@ -17,6 +17,7 @@ global:
 
 garage_doors:
   - # main garage example
+    retries: 0 # additional attempts after a failed garage operation (defaults to 0)
     geofence: # circular geofence with a center point, open and close distances (radii)
       type: circular
       settings:

@@ -266,6 +266,8 @@ Under this configuration, your garage would start to open when you *entered* the
 ### Operation Cooldown
 There's a configurable `cooldown` parameter in the `config.yml` file's `global` section that will allow you to specify how many minutes Tesla-GeoGDO should wait after operating a garage door before it attemps any further operations. This helps prevent potential flapping if that's a concern.
 
+Each entry in `garage_doors` can set `retries` to control how many additional attempts to make when that door's operation fails. It defaults to `0` (one initial attempt, no retries).
+
 ## Credits
 * [TeslaMate](https://github.com/adriankumpf/teslamate)
 * [Ratgdo](https://paulwieland.github.io/ratgdo/)

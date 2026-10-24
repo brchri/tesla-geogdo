@@ -242,6 +242,16 @@ func runGarageDoorsPrompts() []interface{} {
 			garage_door["opener"] = runMqttOpenerPrompts()
 		}
 
+		response = promptUser(question{
+			prompt:                 "How many times should a failed garage door operation be retried? Leave blank for no retries: []",
+			validResponseRegex:     "^(\\d+)?$",
+			invalidResponseMessage: "Please enter a valid retry count",
+		})
+		if len(response) > 0 {
+			retries, _ := strconv.Atoi(response)
+			garage_door["retries"] = retries
+		}
+
 		garage_door["trackers"] = runTrackerPrompts()
 
 		garage_doors = append(garage_doors, garage_door)
